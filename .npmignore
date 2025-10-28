@@ -1,0 +1,27 @@
+# Source files
+src/
+tsconfig.json
+rollup.config.js
+
+# Tests
+test/
+*.spec.ts
+*.test.ts
+
+# Demo
+demo/
+
+# Development
+.git/
+.gitignore
+.vscode/
+.idea/
+
+# CI/CD
+.github/
+
+# Misc
+*.log
+coverage/
+node_modules/
+.DS_Store
