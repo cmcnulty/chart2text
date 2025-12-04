@@ -501,60 +501,39 @@ const chart2text = {
         // Generate detailed descriptions for each dataset
         const descriptions = [];
         const hasMultipleDatasets = chart.data.datasets.length > 1;
-        const shouldIncludeMultiDatasetIntro = options.multiDatasetIntroduction !== false && hasMultipleDatasets;
-        // Add multi-dataset introduction if enabled and multiple datasets exist
-        if (shouldIncludeMultiDatasetIntro) {
-            const generalTemplates = options.templates?.general || englishTemplates.general;
-            const seriesTemplate = generalTemplates?.seriesLabel;
-            const seriesLabelTemplate = typeof seriesTemplate === 'string' ? seriesTemplate : (seriesTemplate?.[0] || 'Series {number}');
-            const datasetLabels = chart.data.datasets
-                .map((ds, i) => ds.label || seriesLabelTemplate.replace(/{number}/g, (i + 1).toString()))
-                .filter(label => label);
-            if (datasetLabels.length > 0) {
-                const templates = options.templates?.multiDataset || englishTemplates.multiDataset;
-                const introTemplate = templates?.introduction;
-                if (introTemplate) {
-                    // Format the dataset list with commas and "and"
-                    let formattedDatasets;
-                    if (datasetLabels.length === 1) {
-                        formattedDatasets = datasetLabels[0];
+        // Check if the chart is stacked
+        const xScale = chart.options.scales?.x;
+        const yScale = chart.options.scales?.y;
+        const isStacked = xScale?.stacked || yScale?.stacked;
+        const shouldCombineStacks = options.combineStacks === true && isStacked && hasMultipleDatasets;
+        // If combining stacks, create a combined dataset with summed values
+        if (shouldCombineStacks) {
+            // Sum all dataset values at each label position
+            const combinedData = [];
+            const labels = chart.data.labels;
+            for (let i = 0; i < labels.length; i++) {
+                let sum = 0;
+                chart.data.datasets.forEach(dataset => {
+                    const value = dataset.data[i];
+                    if (typeof value === 'number') {
+                        sum += value;
                     }
-                    else if (datasetLabels.length === 2) {
-                        formattedDatasets = `${datasetLabels[0]} and ${datasetLabels[1]}`;
-                    }
-                    else {
-                        const allButLast = datasetLabels.slice(0, -1).join(', ');
-                        const last = datasetLabels[datasetLabels.length - 1];
-                        formattedDatasets = `${allButLast}, and ${last}`;
-                    }
-                    // Use first variation if it's an array
-                    const template = typeof introTemplate === 'string' ? introTemplate : introTemplate[0];
-                    const introduction = template
-                        .replace(/{count}/g, datasetLabels.length.toString())
-                        .replace(/{datasets}/g, formattedDatasets);
-                    descriptions.push(introduction);
-                }
+                });
+                combinedData.push(sum);
             }
-        }
-        chart.data.datasets.forEach((dataset, i) => {
-            if (!dataset.data || dataset.data.length === 0) {
-                return;
-            }
-            const generalTemplates = options.templates?.general || englishTemplates.general;
-            const seriesTemplate = generalTemplates?.seriesLabel;
-            const seriesLabelTemplate = typeof seriesTemplate === 'string' ? seriesTemplate : (seriesTemplate?.[0] || 'Series {number}');
-            const datasetLabel = dataset.label || seriesLabelTemplate.replace(/{number}/g, (i + 1).toString());
-            // Prepare options for descriptor
+            // Generate a single description for the combined data
+            options.templates?.general || englishTemplates.general;
+            const chartType = chart.config.type;
+            const stackedLabel = options.datasetLabel || 'Total';
             const descriptorOptions = {
                 ...options,
-                datasetLabel: datasetLabel,
+                datasetLabel: stackedLabel,
                 locale: options.locale || 'en',
                 useRounding: options.useRounding !== false,
                 precision: options.precision || 2,
                 variationStrategy: options.variationStrategy || 'random'
             };
             // Determine which descriptor to use
-            const chartType = chart.config.type;
             const descriptorMode = options.descriptor || 'auto';
             let useMode;
             if (descriptorMode === 'auto') {
@@ -566,26 +545,106 @@ const chart2text = {
             }
             // Generate description based on chosen mode
             let description = '';
-            const xScale = chart.data.labels;
-            const yScale = dataset.data;
             if (useMode === 'trend') {
-                // Use piecewise regression for trend analysis
-                description = describeLineChart(xScale, yScale, descriptorOptions);
+                description = describeLineChart(labels, combinedData, descriptorOptions);
             }
             else {
-                // Use min/max categorical description
-                // Pass chart type for pie chart specific handling
                 const typeForDescriptor = chartType === 'pie' ? 'pie' : 'bar';
-                description = describeBarChart(xScale, yScale, descriptorOptions, typeForDescriptor);
+                description = describeBarChart(labels, combinedData, descriptorOptions, typeForDescriptor);
             }
             if (description) {
-                // For multi-dataset charts, prefix with dataset label
-                if (hasMultipleDatasets) {
-                    description = `${datasetLabel}: ${description}`;
-                }
                 descriptions.push(description);
             }
-        });
+            // Skip the normal multi-dataset processing
+        }
+        else {
+            // Normal processing: describe each dataset separately
+            const shouldIncludeMultiDatasetIntro = options.multiDatasetIntroduction !== false && hasMultipleDatasets;
+            // Add multi-dataset introduction if enabled and multiple datasets exist
+            if (shouldIncludeMultiDatasetIntro) {
+                const generalTemplates = options.templates?.general || englishTemplates.general;
+                const seriesTemplate = generalTemplates?.seriesLabel;
+                const seriesLabelTemplate = typeof seriesTemplate === 'string' ? seriesTemplate : (seriesTemplate?.[0] || 'Series {number}');
+                const datasetLabels = chart.data.datasets
+                    .map((ds, i) => ds.label || seriesLabelTemplate.replace(/{number}/g, (i + 1).toString()))
+                    .filter(label => label);
+                if (datasetLabels.length > 0) {
+                    const templates = options.templates?.multiDataset || englishTemplates.multiDataset;
+                    const introTemplate = templates?.introduction;
+                    if (introTemplate) {
+                        // Format the dataset list with commas and "and"
+                        let formattedDatasets;
+                        if (datasetLabels.length === 1) {
+                            formattedDatasets = datasetLabels[0];
+                        }
+                        else if (datasetLabels.length === 2) {
+                            formattedDatasets = `${datasetLabels[0]} and ${datasetLabels[1]}`;
+                        }
+                        else {
+                            const allButLast = datasetLabels.slice(0, -1).join(', ');
+                            const last = datasetLabels[datasetLabels.length - 1];
+                            formattedDatasets = `${allButLast}, and ${last}`;
+                        }
+                        // Use first variation if it's an array
+                        const template = typeof introTemplate === 'string' ? introTemplate : introTemplate[0];
+                        const introduction = template
+                            .replace(/{count}/g, datasetLabels.length.toString())
+                            .replace(/{datasets}/g, formattedDatasets);
+                        descriptions.push(introduction);
+                    }
+                }
+            }
+            chart.data.datasets.forEach((dataset, i) => {
+                if (!dataset.data || dataset.data.length === 0) {
+                    return;
+                }
+                const generalTemplates = options.templates?.general || englishTemplates.general;
+                const seriesTemplate = generalTemplates?.seriesLabel;
+                const seriesLabelTemplate = typeof seriesTemplate === 'string' ? seriesTemplate : (seriesTemplate?.[0] || 'Series {number}');
+                const datasetLabel = dataset.label || seriesLabelTemplate.replace(/{number}/g, (i + 1).toString());
+                // Prepare options for descriptor
+                const descriptorOptions = {
+                    ...options,
+                    datasetLabel: datasetLabel,
+                    locale: options.locale || 'en',
+                    useRounding: options.useRounding !== false,
+                    precision: options.precision || 2,
+                    variationStrategy: options.variationStrategy || 'random'
+                };
+                // Determine which descriptor to use
+                const chartType = chart.config.type;
+                const descriptorMode = options.descriptor || 'auto';
+                let useMode;
+                if (descriptorMode === 'auto') {
+                    // Auto mode: line charts use trend, bar/pie charts use categorical
+                    useMode = chartType === 'line' ? 'trend' : 'categorical';
+                }
+                else {
+                    useMode = descriptorMode;
+                }
+                // Generate description based on chosen mode
+                let description = '';
+                const xScale = chart.data.labels;
+                const yScale = dataset.data;
+                if (useMode === 'trend') {
+                    // Use piecewise regression for trend analysis
+                    description = describeLineChart(xScale, yScale, descriptorOptions);
+                }
+                else {
+                    // Use min/max categorical description
+                    // Pass chart type for pie chart specific handling
+                    const typeForDescriptor = chartType === 'pie' ? 'pie' : 'bar';
+                    description = describeBarChart(xScale, yScale, descriptorOptions, typeForDescriptor);
+                }
+                if (description) {
+                    // For multi-dataset charts, prefix with dataset label
+                    if (hasMultipleDatasets) {
+                        description = `${datasetLabel}: ${description}`;
+                    }
+                    descriptions.push(description);
+                }
+            });
+        } // End of else block for non-combined stacks
         // Update the description element content
         descriptionEl.innerHTML = descriptions.join(' ');
     },

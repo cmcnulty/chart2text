@@ -146,7 +146,7 @@
   <!-- Example 7: Stacked Bar Chart -->
   <h2 class="example-title">Example 7: Stacked Bar Chart - Quarterly Revenue by Product</h2>
   <p style="margin: 10px 0; color: #666;">
-    Stacked bar charts show multiple datasets where bars are stacked on top of each other. The plugin describes each dataset separately when multiple datasets are present.
+    Stacked bar charts show multiple datasets where bars are stacked on top of each other. With <code>combineStacks: true</code>, the plugin describes the total combined values instead of each dataset separately, making the description more concise.
   </p>
   <div class="chart-container">
     <canvas id="stackedBarChart"></canvas>
@@ -514,9 +514,10 @@
             text: 'Quarterly Revenue by Product Category'
           },
           chart2text: {
+            datasetLabel: 'Total Quarterly Revenue',
             yAxisCurrency: 'USD',
             useRounding: true,
-            multiDatasetIntroduction: true  // Enable multi-dataset introduction
+            combineStacks: true  // Combine stacked values into totals
           }
         }
       }

@@ -76,6 +76,12 @@ export interface Chart2TextOptions {
      * @default true
      */
     sortPieSlices?: boolean;
+    /**
+     * For stacked charts (bar, area, etc.), combine all dataset values into totals
+     * instead of describing each dataset separately
+     * @default false
+     */
+    combineStacks?: boolean;
 }
 /**
  * Template variations for different trend types
