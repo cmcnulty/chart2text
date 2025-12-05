@@ -637,8 +637,20 @@ const chart2text = {
                 }
                 // Generate description based on chosen mode
                 let description = '';
-                const xScale = chart.data.labels;
-                const yScale = dataset.data;
+                let xScale = chart.data.labels;
+                let yScale = dataset.data;
+                // For pie/doughnut charts, filter out hidden data points (slices)
+                if (chartType === 'pie' || chartType === 'doughnut') {
+                    const visibleIndices = [];
+                    yScale.forEach((_, index) => {
+                        if (chart.getDataVisibility(index)) {
+                            visibleIndices.push(index);
+                        }
+                    });
+                    // Filter labels and data to only include visible slices
+                    xScale = visibleIndices.map(idx => xScale[idx]);
+                    yScale = visibleIndices.map(idx => yScale[idx]);
+                }
                 if (useMode === 'trend') {
                     // Use piecewise regression for trend analysis
                     description = describeLineChart(xScale, yScale, descriptorOptions);
