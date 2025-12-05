@@ -43,9 +43,9 @@ export const englishTemplates: TemplateSet = {
       'The {datasetLabel} begins at {startY} at {xUnit} {startX} and drops on average by about {changeRate} per {xUnit} until it reaches {endY} at {xUnit} {endX}.'
     ],
     flat: [
-      'It remains flat at {startY} from {xUnit} {startX} to {xUnit} {endX}.',
-      'The {datasetLabel} holds steady at {startY} between {xUnit} {startX} and {xUnit} {endX}.',
-      'From {xUnit} {startX} to {xUnit} {endX}, it maintains a constant value of {startY}.'
+      'To start, it remains flat at {startY} from {xUnit} {startX} to {xUnit} {endX}.',
+      'The {datasetLabel} starts steady at {startY} between {xUnit} {startX} and {xUnit} {endX}.',
+      'From {xUnit} {startX} to {xUnit} {endX}, it starts at a constant value of {startY}.'
     ]
   },
 

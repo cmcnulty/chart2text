@@ -88,7 +88,8 @@ describe('chart2text plugin', () => {
         },
         config: {
           type: 'bar'
-        }
+        },
+        isDatasetVisible: jest.fn(() => true)
       } as any;
 
       chart2text.afterUpdate?.(mockChart, { mode: "default" as const }, {});
@@ -116,7 +117,8 @@ describe('chart2text plugin', () => {
         },
         config: {
           type: 'bar'
-        }
+        },
+        isDatasetVisible: jest.fn(() => true)
       } as any;
 
       chart2text.afterUpdate?.(mockChart, { mode: "default" as const }, {});
@@ -185,7 +187,8 @@ describe('chart2text plugin', () => {
         },
         config: {
           type: 'bar'
-        }
+        },
+        isDatasetVisible: jest.fn(() => true)
       } as any;
 
       chart2text.afterUpdate?.(mockChart, { mode: "default" as const }, { combineStacks: true });
@@ -217,7 +220,8 @@ describe('chart2text plugin', () => {
         },
         config: {
           type: 'bar'
-        }
+        },
+        isDatasetVisible: jest.fn(() => true)
       } as any;
 
       chart2text.afterUpdate?.(mockChart, { mode: "default" as const }, { combineStacks: false });
@@ -228,6 +232,163 @@ describe('chart2text plugin', () => {
       // Should mention both products
       expect(description).toContain('Product A');
       expect(description).toContain('Product B');
+    });
+
+    it('should exclude hidden datasets from description', () => {
+      const canvas = document.createElement('canvas');
+      canvas.id = 'test-chart';
+      document.body.appendChild(canvas);
+
+      const mockChart = {
+        canvas,
+        options: {},
+        data: {
+          labels: ['Q1', 'Q2'],
+          datasets: [
+            { label: 'Product A', data: [10, 20] },
+            { label: 'Product B', data: [5, 15] },
+            { label: 'Product C', data: [8, 12] }
+          ]
+        },
+        config: { type: 'bar' },
+        isDatasetVisible: jest.fn((index) => index !== 1) // Product B (index 1) is hidden
+      } as any;
+
+      chart2text.afterUpdate?.(mockChart, { mode: "default" as const }, {});
+
+      const descElement = document.getElementById('test-chart-description');
+      const description = descElement?.textContent || '';
+
+      // Should include visible datasets
+      expect(description).toContain('Product A');
+      expect(description).toContain('Product C');
+
+      // Should NOT include hidden dataset
+      expect(description).not.toContain('Product B');
+
+      canvas.remove();
+      descElement?.remove();
+    });
+
+    it('should update multi-dataset introduction when dataset is hidden', () => {
+      const canvas = document.createElement('canvas');
+      canvas.id = 'test-chart';
+      document.body.appendChild(canvas);
+
+      const mockChart = {
+        canvas,
+        options: {},
+        data: {
+          labels: ['Q1', 'Q2'],
+          datasets: [
+            { label: 'Revenue', data: [100, 120] },
+            { label: 'Expenses', data: [80, 90] },
+            { label: 'Profit', data: [20, 30] }
+          ]
+        },
+        config: { type: 'line' },
+        isDatasetVisible: jest.fn((index) => index !== 1) // Expenses (index 1) is hidden
+      } as any;
+
+      chart2text.afterUpdate?.(mockChart, { mode: "default" as const }, { multiDatasetIntroduction: true });
+
+      const descElement = document.getElementById('test-chart-description');
+      const description = descElement?.textContent || '';
+
+      // Should say "2 data series" not "3 data series"
+      expect(description).toContain('2 data series');
+      expect(description).not.toContain('3 data series');
+
+      // Should list only visible datasets in introduction
+      expect(description).toMatch(/Revenue.*Profit/);
+      expect(description).not.toContain('Expenses');
+
+      canvas.remove();
+      descElement?.remove();
+    });
+
+    it('should update description when dataset visibility changes', () => {
+      const canvas = document.createElement('canvas');
+      canvas.id = 'test-chart';
+      document.body.appendChild(canvas);
+
+      let isDataset1Visible = true;
+
+      const mockChart = {
+        canvas,
+        options: {},
+        data: {
+          labels: ['Q1', 'Q2'],
+          datasets: [
+            { label: 'Product A', data: [10, 20] },
+            { label: 'Product B', data: [5, 15] }
+          ]
+        },
+        config: { type: 'bar' },
+        isDatasetVisible: jest.fn((index) => index === 0 || isDataset1Visible)
+      } as any;
+
+      // First render - all datasets visible
+      chart2text.afterUpdate?.(mockChart, { mode: "default" as const }, {});
+
+      let descElement = document.getElementById('test-chart-description');
+      let description = descElement?.textContent || '';
+
+      expect(description).toContain('Product A');
+      expect(description).toContain('Product B');
+
+      // Simulate hiding Product B (user clicks legend)
+      isDataset1Visible = false;
+
+      // Chart.js calls update(), which triggers afterUpdate
+      chart2text.afterUpdate?.(mockChart, { mode: "default" as const }, {});
+
+      descElement = document.getElementById('test-chart-description');
+      description = descElement?.textContent || '';
+
+      // Description should now exclude Product B
+      expect(description).toContain('Product A');
+      expect(description).not.toContain('Product B');
+
+      canvas.remove();
+      descElement?.remove();
+    });
+
+    it('should exclude hidden slices from pie chart description', () => {
+      const canvas = document.createElement('canvas');
+      canvas.id = 'test-pie-chart';
+      document.body.appendChild(canvas);
+
+      const mockChart = {
+        canvas,
+        options: {},
+        data: {
+          labels: ['Marketing', 'Development', 'Sales', 'Operations'],
+          datasets: [{
+            label: 'Department Budget',
+            data: [45000, 120000, 85000, 60000]
+          }]
+        },
+        config: { type: 'pie' },
+        isDatasetVisible: jest.fn(() => true),
+        getDataVisibility: jest.fn((index) => index !== 2) // Sales (index 2) is hidden
+      } as any;
+
+      chart2text.afterUpdate?.(mockChart, { mode: "default" as const }, {});
+
+      const descElement = document.getElementById('test-pie-chart-description');
+      const description = descElement?.textContent || '';
+
+      // Should include visible slices
+      expect(description).toContain('Marketing');
+      expect(description).toContain('Development');
+      expect(description).toContain('Operations');
+
+      // Should NOT include hidden slice
+      expect(description).not.toContain('Sales');
+
+      canvas.remove();
+      descElement?.remove();
     });
   });
 

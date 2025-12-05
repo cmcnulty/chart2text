@@ -174,6 +174,32 @@
     // Register the plugin
     Chart.register(chart2text);
 
+    // Helper function to setup description display with auto-update
+    function setupDescriptionDisplay(chartId, displayElementId) {
+      setTimeout(() => {
+        const desc = document.querySelector(`#${chartId}-description`);
+        if (desc) {
+          const displayEl = document.getElementById(displayElementId);
+
+          // Function to update display
+          function updateDisplay() {
+            displayEl.textContent = desc.textContent;
+          }
+
+          // Initial update
+          updateDisplay();
+
+          // Watch for changes
+          const observer = new MutationObserver(updateDisplay);
+          observer.observe(desc, {
+            childList: true,
+            characterData: true,
+            subtree: true
+          });
+        }
+      }, 500);
+    }
+
     // Example 1: Line Chart
     const lineCtx = document.getElementById('lineChart');
     const lineChart = new Chart(lineCtx, {
@@ -207,12 +233,7 @@
     });
 
     // Show the description
-    setTimeout(() => {
-      const desc = document.querySelector('#lineChart-description');
-      if (desc) {
-        document.getElementById('lineDescription').textContent = desc.textContent;
-      }
-    }, 500);
+    setupDescriptionDisplay('lineChart', 'lineDescription');
 
     // Example 2: Bar Chart
     const barCtx = document.getElementById('barChart');
@@ -246,12 +267,7 @@
       }
     });
 
-    setTimeout(() => {
-      const desc = document.querySelector('#barChart-description');
-      if (desc) {
-        document.getElementById('barDescription').textContent = desc.textContent;
-      }
-    }, 500);
+    setupDescriptionDisplay('barChart', 'barDescription');
 
     // Example 3: Multi-line Chart
     const multiLineCtx = document.getElementById('multiLineChart');
@@ -290,12 +306,7 @@
       }
     });
 
-    setTimeout(() => {
-      const desc = document.querySelector('#multiLineChart-description');
-      if (desc) {
-        document.getElementById('multiLineDescription').textContent = desc.textContent;
-      }
-    }, 500);
+    setupDescriptionDisplay('multiLineChart', 'multiLineDescription');
 
     // Example 4: Sequential Bar Chart with Trend Analysis
     const sequentialBarCtx = document.getElementById('sequentialBarChart');
@@ -334,12 +345,7 @@
       }
     });
 
-    setTimeout(() => {
-      const desc = document.querySelector('#sequentialBarChart-description');
-      if (desc) {
-        document.getElementById('sequentialBarDescription').textContent = desc.textContent;
-      }
-    }, 500);
+    setupDescriptionDisplay('sequentialBarChart', 'sequentialBarDescription');
 
     // Example 5: Pie Chart with Sorted Slices
     const pieCtx = document.getElementById('pieChart');
@@ -377,12 +383,7 @@
       }
     });
 
-    setTimeout(() => {
-      const desc = document.querySelector('#pieChart-description');
-      if (desc) {
-        document.getElementById('pieDescription').textContent = desc.textContent;
-      }
-    }, 500);
+    setupDescriptionDisplay('pieChart', 'pieDescription');
 
     // Example 6: Monthly Data (31 days) - Volume increases during weekdays, decreases on weekends
     // Generate 31 days of data starting from January 1, 2024
@@ -467,12 +468,7 @@
       }
     });
 
-    setTimeout(() => {
-      const desc = document.querySelector('#monthlyChart-description');
-      if (desc) {
-        document.getElementById('monthlyDescription').textContent = desc.textContent;
-      }
-    }, 500);
+    setupDescriptionDisplay('monthlyChart', 'monthlyDescription');
 
     // Example 7: Stacked Bar Chart
     const stackedBarCtx = document.getElementById('stackedBarChart');
@@ -523,12 +519,7 @@
       }
     });
 
-    setTimeout(() => {
-      const desc = document.querySelector('#stackedBarChart-description');
-      if (desc) {
-        document.getElementById('stackedBarDescription').textContent = desc.textContent;
-      }
-    }, 500);
+    setupDescriptionDisplay('stackedBarChart', 'stackedBarDescription');
   </script>
 </body>
 </html>

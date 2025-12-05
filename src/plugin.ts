@@ -70,7 +70,10 @@ export const chart2text: Plugin<'line' | 'bar' | 'pie', Chart2TextOptions> = {
 
     // Generate detailed descriptions for each dataset
     const descriptions: string[] = [];
-    const hasMultipleDatasets = chart.data.datasets.length > 1;
+
+    // Count only visible datasets
+    const visibleDatasets = chart.data.datasets.filter((_, i) => chart.isDatasetVisible(i));
+    const hasMultipleDatasets = visibleDatasets.length > 1;
 
     // Check if the chart is stacked
     const xScale = chart.options.scales?.x as any;
@@ -86,17 +89,19 @@ export const chart2text: Plugin<'line' | 'bar' | 'pie', Chart2TextOptions> = {
 
       for (let i = 0; i < labels.length; i++) {
         let sum = 0;
-        chart.data.datasets.forEach(dataset => {
-          const value = dataset.data[i];
-          if (typeof value === 'number') {
-            sum += value;
+        chart.data.datasets.forEach((dataset, datasetIndex) => {
+          // Only include visible datasets
+          if (chart.isDatasetVisible(datasetIndex)) {
+            const value = dataset.data[i];
+            if (typeof value === 'number') {
+              sum += value;
+            }
           }
         });
         combinedData.push(sum);
       }
 
       // Generate a single description for the combined data
-      const generalTemplates = options.templates?.general || englishTemplates.general;
       const chartType = (chart.config as any).type;
       const stackedLabel = options.datasetLabel || 'Total';
 
@@ -145,8 +150,12 @@ export const chart2text: Plugin<'line' | 'bar' | 'pie', Chart2TextOptions> = {
       const seriesLabelTemplate = typeof seriesTemplate === 'string' ? seriesTemplate : (seriesTemplate?.[0] || 'Series {number}');
 
       const datasetLabels = chart.data.datasets
-        .map((ds, i) => ds.label || seriesLabelTemplate.replace(/{number}/g, (i + 1).toString()))
-        .filter(label => label);
+        .map((ds, i) => {
+          // Only include visible datasets
+          if (!chart.isDatasetVisible(i)) return null;
+          return ds.label || seriesLabelTemplate.replace(/{number}/g, (i + 1).toString());
+        })
+        .filter(label => label !== null) as string[];
 
       if (datasetLabels.length > 0) {
         const templates = options.templates?.multiDataset || englishTemplates.multiDataset;
@@ -181,6 +190,11 @@ export const chart2text: Plugin<'line' | 'bar' | 'pie', Chart2TextOptions> = {
         return;
       }
 
+      // Skip hidden datasets
+      if (!chart.isDatasetVisible(i)) {
+        return;
+      }
+
       const generalTemplates = options.templates?.general || englishTemplates.general;
       const seriesTemplate = generalTemplates?.seriesLabel;
       const seriesLabelTemplate = typeof seriesTemplate === 'string' ? seriesTemplate : (seriesTemplate?.[0] || 'Series {number}');
@@ -211,8 +225,22 @@ export const chart2text: Plugin<'line' | 'bar' | 'pie', Chart2TextOptions> = {
 
       // Generate description based on chosen mode
       let description = '';
-      const xScale = chart.data.labels as any[];
-      const yScale = dataset.data as any[];
+      let xScale = chart.data.labels as any[];
+      let yScale = dataset.data as any[];
+
+      // For pie/doughnut charts, filter out hidden data points (slices)
+      if (chartType === 'pie' || chartType === 'doughnut') {
+        const visibleIndices: number[] = [];
+        yScale.forEach((_, index) => {
+          if (chart.getDataVisibility(index)) {
+            visibleIndices.push(index);
+          }
+        });
+
+        // Filter labels and data to only include visible slices
+        xScale = visibleIndices.map(idx => xScale[idx]);
+        yScale = visibleIndices.map(idx => yScale[idx]);
+      }
 
       if (useMode === 'trend') {
         // Use piecewise regression for trend analysis
@@ -241,7 +269,7 @@ export const chart2text: Plugin<'line' | 'bar' | 'pie', Chart2TextOptions> = {
   /**
    * Clean up when chart is destroyed
    */
-  afterDestroy(chart: Chart, args: any, options: Chart2TextOptions) {
+  afterDestroy(chart: Chart, _args: any, _options: Chart2TextOptions) {
     // Clean up - remove the description element when chart is destroyed
     const canvas = chart.canvas;
     const descriptionId = `${canvas.id}-description`;
