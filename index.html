@@ -531,33 +531,25 @@
       }
     }
 
-    // Initial update
-    setTimeout(updateStackedBarDescription, 500);
+    // Watch for changes to the description element and update the display
+    setTimeout(() => {
+      const desc = document.querySelector('#stackedBarChart-description');
+      if (desc) {
+        // Initial update
+        updateStackedBarDescription();
 
-    // Update when chart changes (e.g., legend click)
-    const originalOnClick = stackedBarChart.options.plugins.legend?.onClick;
-    if (!stackedBarChart.options.plugins.legend) {
-      stackedBarChart.options.plugins.legend = {};
-    }
-    stackedBarChart.options.plugins.legend.onClick = function(e, legendItem, legend) {
-      // Call the default Chart.js legend click handler
-      if (originalOnClick) {
-        originalOnClick.call(this, e, legendItem, legend);
-      } else {
-        // Default behavior: toggle dataset visibility
-        const index = legendItem.datasetIndex;
-        const chart = legend.chart;
-        if (chart.isDatasetVisible(index)) {
-          chart.hide(index);
-        } else {
-          chart.show(index);
-        }
-        chart.update();
+        // Watch for future changes
+        const observer = new MutationObserver(() => {
+          updateStackedBarDescription();
+        });
+
+        observer.observe(desc, {
+          childList: true,
+          characterData: true,
+          subtree: true
+        });
       }
-
-      // Update the description display after a short delay
-      setTimeout(updateStackedBarDescription, 100);
-    };
+    }, 500);
   </script>
 </body>
 </html>
