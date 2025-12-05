@@ -500,7 +500,12 @@ const chart2text = {
         canvas.setAttribute('role', 'img');
         // Generate detailed descriptions for each dataset
         const descriptions = [];
-        const hasMultipleDatasets = chart.data.datasets.length > 1;
+        // Count only visible datasets
+        const visibleDatasets = chart.data.datasets.filter((_, i) => {
+            // Check if chart has isDatasetVisible method (it should in real Chart.js instances)
+            return typeof chart.isDatasetVisible === 'function' ? chart.isDatasetVisible(i) : true;
+        });
+        const hasMultipleDatasets = visibleDatasets.length > 1;
         // Check if the chart is stacked
         const xScale = chart.options.scales?.x;
         const yScale = chart.options.scales?.y;
@@ -513,10 +518,14 @@ const chart2text = {
             const labels = chart.data.labels;
             for (let i = 0; i < labels.length; i++) {
                 let sum = 0;
-                chart.data.datasets.forEach(dataset => {
-                    const value = dataset.data[i];
-                    if (typeof value === 'number') {
-                        sum += value;
+                chart.data.datasets.forEach((dataset, datasetIndex) => {
+                    // Only include visible datasets
+                    const isVisible = typeof chart.isDatasetVisible === 'function' ? chart.isDatasetVisible(datasetIndex) : true;
+                    if (isVisible) {
+                        const value = dataset.data[i];
+                        if (typeof value === 'number') {
+                            sum += value;
+                        }
                     }
                 });
                 combinedData.push(sum);
@@ -566,8 +575,14 @@ const chart2text = {
                 const seriesTemplate = generalTemplates?.seriesLabel;
                 const seriesLabelTemplate = typeof seriesTemplate === 'string' ? seriesTemplate : (seriesTemplate?.[0] || 'Series {number}');
                 const datasetLabels = chart.data.datasets
-                    .map((ds, i) => ds.label || seriesLabelTemplate.replace(/{number}/g, (i + 1).toString()))
-                    .filter(label => label);
+                    .map((ds, i) => {
+                    // Only include visible datasets
+                    const isVisible = typeof chart.isDatasetVisible === 'function' ? chart.isDatasetVisible(i) : true;
+                    if (!isVisible)
+                        return null;
+                    return ds.label || seriesLabelTemplate.replace(/{number}/g, (i + 1).toString());
+                })
+                    .filter(label => label !== null);
                 if (datasetLabels.length > 0) {
                     const templates = options.templates?.multiDataset || englishTemplates.multiDataset;
                     const introTemplate = templates?.introduction;
@@ -596,6 +611,11 @@ const chart2text = {
             }
             chart.data.datasets.forEach((dataset, i) => {
                 if (!dataset.data || dataset.data.length === 0) {
+                    return;
+                }
+                // Skip hidden datasets
+                const isVisible = typeof chart.isDatasetVisible === 'function' ? chart.isDatasetVisible(i) : true;
+                if (!isVisible) {
                     return;
                 }
                 const generalTemplates = options.templates?.general || englishTemplates.general;

@@ -523,12 +523,41 @@
       }
     });
 
-    setTimeout(() => {
+    // Function to update the display description
+    function updateStackedBarDescription() {
       const desc = document.querySelector('#stackedBarChart-description');
       if (desc) {
         document.getElementById('stackedBarDescription').textContent = desc.textContent;
       }
-    }, 500);
+    }
+
+    // Initial update
+    setTimeout(updateStackedBarDescription, 500);
+
+    // Update when chart changes (e.g., legend click)
+    const originalOnClick = stackedBarChart.options.plugins.legend?.onClick;
+    if (!stackedBarChart.options.plugins.legend) {
+      stackedBarChart.options.plugins.legend = {};
+    }
+    stackedBarChart.options.plugins.legend.onClick = function(e, legendItem, legend) {
+      // Call the default Chart.js legend click handler
+      if (originalOnClick) {
+        originalOnClick.call(this, e, legendItem, legend);
+      } else {
+        // Default behavior: toggle dataset visibility
+        const index = legendItem.datasetIndex;
+        const chart = legend.chart;
+        if (chart.isDatasetVisible(index)) {
+          chart.hide(index);
+        } else {
+          chart.show(index);
+        }
+        chart.update();
+      }
+
+      // Update the description display after a short delay
+      setTimeout(updateStackedBarDescription, 100);
+    };
   </script>
 </body>
 </html>
