@@ -143,6 +143,19 @@
     <div id="monthlyDescription"></div>
   </div>
 
+  <!-- Example 7: Stacked Bar Chart -->
+  <h2 class="example-title">Example 7: Stacked Bar Chart - Quarterly Revenue by Product</h2>
+  <p style="margin: 10px 0; color: #666;">
+    Stacked bar charts show multiple datasets where bars are stacked on top of each other. With <code>combineStacks: true</code>, the plugin describes the total combined values instead of each dataset separately, making the description more concise.
+  </p>
+  <div class="chart-container">
+    <canvas id="stackedBarChart"></canvas>
+  </div>
+  <div class="description">
+    <strong>Generated Description:</strong>
+    <div id="stackedBarDescription"></div>
+  </div>
+
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
   <!-- Import map to resolve npm dependencies -->
@@ -458,6 +471,62 @@
       const desc = document.querySelector('#monthlyChart-description');
       if (desc) {
         document.getElementById('monthlyDescription').textContent = desc.textContent;
+      }
+    }, 500);
+
+    // Example 7: Stacked Bar Chart
+    const stackedBarCtx = document.getElementById('stackedBarChart');
+    const stackedBarChart = new Chart(stackedBarCtx, {
+      type: 'bar',
+      data: {
+        labels: ['Q1', 'Q2', 'Q3', 'Q4'],
+        datasets: [
+          {
+            label: 'Software',
+            data: [28000, 32000, 35000, 42000],
+            backgroundColor: 'rgba(33, 150, 243, 0.8)'
+          },
+          {
+            label: 'Hardware',
+            data: [18000, 22000, 19000, 25000],
+            backgroundColor: 'rgba(76, 175, 80, 0.8)'
+          },
+          {
+            label: 'Services',
+            data: [15000, 17000, 21000, 24000],
+            backgroundColor: 'rgba(255, 152, 0, 0.8)'
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        scales: {
+          x: {
+            stacked: true
+          },
+          y: {
+            stacked: true
+          }
+        },
+        plugins: {
+          title: {
+            display: true,
+            text: 'Quarterly Revenue by Product Category'
+          },
+          chart2text: {
+            datasetLabel: 'Total Quarterly Revenue',
+            yAxisCurrency: 'USD',
+            useRounding: true,
+            combineStacks: true  // Combine stacked values into totals
+          }
+        }
+      }
+    });
+
+    setTimeout(() => {
+      const desc = document.querySelector('#stackedBarChart-description');
+      if (desc) {
+        document.getElementById('stackedBarDescription').textContent = desc.textContent;
       }
     }, 500);
   </script>

@@ -7,6 +7,10 @@
 
 **chart2text** is a Chart.js plugin that automatically generates natural language descriptions of chart data, making visualizations accessible to users with screen readers and other assistive technologies.
 
+## 🎪 Live Demo
+
+**[View Interactive Demo](https://cmcnulty.github.io/chart2text)** - See chart2text in action with various chart types and configurations.
+
 ## ✨ Features
 
 - 🎯 **Intelligent Trend Analysis** - Uses piecewise linear regression to describe trends naturally
@@ -376,7 +380,7 @@ The plugin uses two description strategies based on the `descriptor` option:
 
 ## 📝 Examples
 
-Check out the `/demo` directory for interactive examples:
+**[View Live Demo](https://cmcnulty.github.io/chart2text)** with interactive examples, or check out the `/demo` directory:
 
 - Basic line chart with trend analysis
 - Multi-dataset line chart
