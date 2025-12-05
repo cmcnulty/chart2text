@@ -4,7 +4,7 @@ package-lock.json
 yarn.lock
 
 # Build outputs
-# dist/ - Committed for GitHub Pages demo
+dist/
 docs/
 *.tsbuildinfo
 
