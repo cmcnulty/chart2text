@@ -71,10 +71,75 @@ export const chart2text: Plugin<'line' | 'bar' | 'pie', Chart2TextOptions> = {
     // Generate detailed descriptions for each dataset
     const descriptions: string[] = [];
     const hasMultipleDatasets = chart.data.datasets.length > 1;
-    const shouldIncludeMultiDatasetIntro = options.multiDatasetIntroduction !== false && hasMultipleDatasets;
 
-    // Add multi-dataset introduction if enabled and multiple datasets exist
-    if (shouldIncludeMultiDatasetIntro) {
+    // Check if the chart is stacked
+    const xScale = chart.options.scales?.x as any;
+    const yScale = chart.options.scales?.y as any;
+    const isStacked = xScale?.stacked || yScale?.stacked;
+    const shouldCombineStacks = options.combineStacks === true && isStacked && hasMultipleDatasets;
+
+    // If combining stacks, create a combined dataset with summed values
+    if (shouldCombineStacks) {
+      // Sum all dataset values at each label position
+      const combinedData: number[] = [];
+      const labels = chart.data.labels as any[];
+
+      for (let i = 0; i < labels.length; i++) {
+        let sum = 0;
+        chart.data.datasets.forEach(dataset => {
+          const value = dataset.data[i];
+          if (typeof value === 'number') {
+            sum += value;
+          }
+        });
+        combinedData.push(sum);
+      }
+
+      // Generate a single description for the combined data
+      const generalTemplates = options.templates?.general || englishTemplates.general;
+      const chartType = (chart.config as any).type;
+      const stackedLabel = options.datasetLabel || 'Total';
+
+      const descriptorOptions: Chart2TextOptions = {
+        ...options,
+        datasetLabel: stackedLabel,
+        locale: options.locale || 'en',
+        useRounding: options.useRounding !== false,
+        precision: options.precision || 2,
+        variationStrategy: options.variationStrategy || 'random'
+      };
+
+      // Determine which descriptor to use
+      const descriptorMode = options.descriptor || 'auto';
+      let useMode: 'trend' | 'categorical';
+
+      if (descriptorMode === 'auto') {
+        // Auto mode: line charts use trend, bar/pie charts use categorical
+        useMode = chartType === 'line' ? 'trend' : 'categorical';
+      } else {
+        useMode = descriptorMode;
+      }
+
+      // Generate description based on chosen mode
+      let description = '';
+      if (useMode === 'trend') {
+        description = describeLineChart(labels, combinedData, descriptorOptions);
+      } else {
+        const typeForDescriptor = chartType === 'pie' ? 'pie' : 'bar';
+        description = describeBarChart(labels, combinedData, descriptorOptions, typeForDescriptor);
+      }
+
+      if (description) {
+        descriptions.push(description);
+      }
+
+      // Skip the normal multi-dataset processing
+    } else {
+      // Normal processing: describe each dataset separately
+      const shouldIncludeMultiDatasetIntro = options.multiDatasetIntroduction !== false && hasMultipleDatasets;
+
+      // Add multi-dataset introduction if enabled and multiple datasets exist
+      if (shouldIncludeMultiDatasetIntro) {
       const generalTemplates = options.templates?.general || englishTemplates.general;
       const seriesTemplate = generalTemplates?.seriesLabel;
       const seriesLabelTemplate = typeof seriesTemplate === 'string' ? seriesTemplate : (seriesTemplate?.[0] || 'Series {number}');
@@ -167,6 +232,7 @@ export const chart2text: Plugin<'line' | 'bar' | 'pie', Chart2TextOptions> = {
         descriptions.push(description);
       }
     });
+    } // End of else block for non-combined stacks
 
     // Update the description element content
     descriptionEl.innerHTML = descriptions.join(' ');
