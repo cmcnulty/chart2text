@@ -30,13 +30,19 @@ export function describeBarChart(
   labels: any[],
   values: any[],
   options: Chart2TextOptions,
+  datasetLabel?: string,
   chartType: 'bar' | 'pie' = 'bar'
 ): string {
   if (!labels || !values || labels.length === 0 || values.length === 0) {
     return 'No data available to describe.';
   }
 
-  const datasetLabel = options.datasetLabel || 'data';
+  // Get dataset label from parameter, or fall back to template, or use 'data' as last resort
+  const generalTemplates = options.templates?.general || englishTemplates.general;
+  const templateLabel = typeof generalTemplates?.datasetLabel === 'string'
+    ? generalTemplates.datasetLabel
+    : (generalTemplates?.datasetLabel?.[0] || 'data');
+  const datasetLabelToUse = datasetLabel || templateLabel;
   const yAxisCurrency = options.yAxisCurrency;
 
   // Use templates from options or fall back to English
@@ -71,7 +77,6 @@ export function describeBarChart(
   let result = '';
 
   // Get chart type label from templates
-  const generalTemplates = options.templates?.general || englishTemplates.general;
   const chartTypeLabel = chartType === 'pie'
     ? selectTemplate(generalTemplates?.pieChartLabel)
     : selectTemplate(generalTemplates?.barChartLabel);
@@ -79,7 +84,7 @@ export function describeBarChart(
   // Introduction
   const introTemplate = selectTemplate(templates.chartIntroduction);
   if (introTemplate) {
-    result += fillTemplate(introTemplate, { chartType: chartTypeLabel, datasetLabel }) + ' ';
+    result += fillTemplate(introTemplate, { chartType: chartTypeLabel, datasetLabel: datasetLabelToUse }) + ' ';
   }
 
   // Category count

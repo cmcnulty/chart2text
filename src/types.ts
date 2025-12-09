@@ -17,11 +17,6 @@ export interface Chart2TextOptions {
   locale?: string;
 
   /**
-   * Label for the dataset (e.g., "Retirement Income", "Sales")
-   */
-  datasetLabel?: string;
-
-  /**
    * Unit for x-axis values (e.g., "years", "months", "age")
    * @default 'units'
    */
@@ -137,6 +132,7 @@ export interface GeneralTemplates {
   seriesLabel?: string | string[];
   barChartLabel?: string | string[];
   pieChartLabel?: string | string[];
+  datasetLabel?: string | string[];
 }
 
 /**

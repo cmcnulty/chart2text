@@ -7,13 +7,14 @@ jest.mock('segreg');
 
 describe('describeLineChart', () => {
   const defaultOptions: Chart2TextOptions = {
-    datasetLabel: 'Test Data',
     xUnit: 'year',
     yUnit: 'units',
     locale: 'en',
     useRounding: true,
     precision: 2
   };
+
+  const defaultLabel = 'Test Data';
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -24,7 +25,7 @@ describe('describeLineChart', () => {
       const labels: any[] = [];
       const values: any[] = [];
 
-      const description = describeLineChart(labels, values, defaultOptions);
+      const description = describeLineChart(labels, values, defaultOptions, defaultLabel);
 
       expect(description).toContain('No data');
     });
@@ -37,7 +38,7 @@ describe('describeLineChart', () => {
         segments: []
       });
 
-      const description = describeLineChart(labels, values, defaultOptions);
+      const description = describeLineChart(labels, values, defaultOptions, defaultLabel);
 
       expect(description).toBeTruthy();
       expect(segreg.piecewise).toHaveBeenCalled();
@@ -51,7 +52,7 @@ describe('describeLineChart', () => {
         segments: []
       });
 
-      describeLineChart(labels, values, defaultOptions);
+      describeLineChart(labels, values, defaultOptions, defaultLabel);
 
       // For numeric labels, the numeric values themselves are used
       expect(segreg.piecewise).toHaveBeenCalledWith(
@@ -81,7 +82,7 @@ describe('describeLineChart', () => {
         ]
       });
 
-      const description = describeLineChart(labels, values, defaultOptions);
+      const description = describeLineChart(labels, values, defaultOptions, defaultLabel);
 
       expect(description).toContain('2020');
       expect(description).toContain('2023');
@@ -108,7 +109,7 @@ describe('describeLineChart', () => {
         ]
       });
 
-      const description = describeLineChart(labels, values, defaultOptions);
+      const description = describeLineChart(labels, values, defaultOptions, defaultLabel);
 
       expect(description).toBeTruthy();
       expect(description).toContain('2020');
@@ -134,7 +135,7 @@ describe('describeLineChart', () => {
         ]
       });
 
-      const description = describeLineChart(labels, values, defaultOptions);
+      const description = describeLineChart(labels, values, defaultOptions, defaultLabel);
 
       expect(description).toBeTruthy();
       expect(description).toContain('100');
@@ -171,7 +172,7 @@ describe('describeLineChart', () => {
         ]
       });
 
-      const description = describeLineChart(labels, values, defaultOptions);
+      const description = describeLineChart(labels, values, defaultOptions, defaultLabel);
 
       // Should describe both segments
       expect(description).toBeTruthy();
@@ -217,7 +218,7 @@ describe('describeLineChart', () => {
         ]
       });
 
-      const description = describeLineChart(labels, values, defaultOptions);
+      const description = describeLineChart(labels, values, defaultOptions, defaultLabel);
 
       expect(description).toBeTruthy();
     });
@@ -243,7 +244,7 @@ describe('describeLineChart', () => {
         ]
       });
 
-      const description = describeLineChart(labels, values, defaultOptions);
+      const description = describeLineChart(labels, values, defaultOptions, defaultLabel);
 
       // Should use original labels
       expect(description).toContain('Jan');
@@ -269,7 +270,7 @@ describe('describeLineChart', () => {
         ]
       });
 
-      const description = describeLineChart(labels, values, defaultOptions);
+      const description = describeLineChart(labels, values, defaultOptions, defaultLabel);
 
       expect(description).toContain('2020');
       expect(description).toContain('2022');
@@ -300,7 +301,7 @@ describe('describeLineChart', () => {
         ]
       });
 
-      const description = describeLineChart(labels, values, options);
+      const description = describeLineChart(labels, values, options, defaultLabel);
 
       expect(description).toContain('$');
     });
@@ -330,7 +331,7 @@ describe('describeLineChart', () => {
         ]
       });
 
-      const description = describeLineChart(labels, values, options);
+      const description = describeLineChart(labels, values, options, defaultLabel);
 
       expect(description.toLowerCase()).toContain('month');
     });
@@ -358,7 +359,7 @@ describe('describeLineChart', () => {
         ]
       });
 
-      const description = describeLineChart(labels, values, options);
+      const description = describeLineChart(labels, values, options, defaultLabel);
 
       // Y-unit should be present and description should mention the values
       expect(description).toBeTruthy();
@@ -387,7 +388,7 @@ describe('describeLineChart', () => {
         ]
       });
 
-      const description = describeLineChart(labels, values, defaultOptions);
+      const description = describeLineChart(labels, values, defaultOptions, defaultLabel);
 
       expect(description).toBeTruthy();
     });
@@ -411,7 +412,7 @@ describe('describeLineChart', () => {
         ]
       });
 
-      const description = describeLineChart(labels, values, defaultOptions);
+      const description = describeLineChart(labels, values, defaultOptions, defaultLabel);
 
       expect(description).toContain('-100');
       expect(description).toContain('0');
@@ -436,7 +437,7 @@ describe('describeLineChart', () => {
         ]
       });
 
-      const description = describeLineChart(labels, values, defaultOptions);
+      const description = describeLineChart(labels, values, defaultOptions, defaultLabel);
 
       expect(description).toBeTruthy();
     });
@@ -473,7 +474,7 @@ describe('describeLineChart', () => {
         ]
       });
 
-      const description = describeLineChart(labels, values, defaultOptions);
+      const description = describeLineChart(labels, values, defaultOptions, defaultLabel);
 
       // Should describe both segments
       expect(description).toBeTruthy();
@@ -504,7 +505,7 @@ describe('describeLineChart', () => {
         ]
       });
 
-      const description = describeLineChart(labels, values, options);
+      const description = describeLineChart(labels, values, options, defaultLabel);
 
       // With rounding, large numbers should be rounded
       expect(description).toBeTruthy();
@@ -534,7 +535,7 @@ describe('describeLineChart', () => {
         ]
       });
 
-      const description = describeLineChart(labels, values, options);
+      const description = describeLineChart(labels, values, options, defaultLabel);
 
       expect(description).toBeTruthy();
     });

@@ -85,11 +85,19 @@ function selectTemplate(
 export function describeLineChart(
   xScale: any[],
   yScale: any[],
-  options: Chart2TextOptions
+  options: Chart2TextOptions,
+  datasetLabel?: string
 ): string {
   if (!xScale || !yScale || xScale.length === 0 || yScale.length === 0) {
     return 'No data available to describe.';
   }
+
+  // Get dataset label from parameter, or fall back to template, or use 'data' as last resort
+  const generalTemplates = options.templates?.general || englishTemplates.general;
+  const templateLabel = typeof generalTemplates?.datasetLabel === 'string'
+    ? generalTemplates.datasetLabel
+    : (generalTemplates?.datasetLabel?.[0] || 'data');
+  const datasetLabelToUse = datasetLabel || templateLabel;
 
   // Convert labels to numeric values if needed for regression
   const numericXScale = xScale.map((x, i) => {
@@ -151,7 +159,7 @@ export function describeLineChart(
 
     if (selectedIntro) {
       result = fillTemplate(selectedIntro, {
-        datasetLabel: options.datasetLabel || 'data',
+        datasetLabel: datasetLabelToUse,
         xUnit: options.xUnit || 'units',
         yUnit: options.yUnit || 'units'
       } as TemplateValues) + ' ';
@@ -231,7 +239,7 @@ export function describeLineChart(
       changeRate: formatNumber(roundedSlope, options, yAxisCurrency),
       xUnit: options.xUnit || 'units',
       yUnit: options.yUnit || 'units',
-      datasetLabel: options.datasetLabel || 'data'
+      datasetLabel: datasetLabelToUse
     };
 
     // Select appropriate template based on segment position and slope type

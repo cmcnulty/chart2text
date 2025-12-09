@@ -3,17 +3,18 @@ import { Chart2TextOptions } from '../../types';
 
 describe('describeBarChart', () => {
   const defaultOptions: Chart2TextOptions = {
-    datasetLabel: 'Test Data',
     locale: 'en',
     useRounding: true,
     precision: 2
   };
 
+  const defaultLabel = 'Test Data';
+
   describe('basic descriptions', () => {
     it('should describe a simple bar chart', () => {
       const labels = ['A', 'B', 'C', 'D'];
       const values = [10, 20, 15, 25];
-      const description = describeBarChart(labels, values, defaultOptions);
+      const description = describeBarChart(labels, values, defaultOptions, defaultLabel);
 
       expect(description).toContain('4 categories');
       expect(description).toContain('10');
@@ -23,7 +24,7 @@ describe('describeBarChart', () => {
     it('should identify min and max values', () => {
       const labels = ['Q1', 'Q2', 'Q3', 'Q4'];
       const values = [100, 150, 90, 120];
-      const description = describeBarChart(labels, values, defaultOptions);
+      const description = describeBarChart(labels, values, defaultOptions, defaultLabel);
 
       expect(description).toContain('90');
       expect(description).toContain('150');
@@ -34,7 +35,7 @@ describe('describeBarChart', () => {
     it('should list all values for small datasets', () => {
       const labels = ['A', 'B', 'C'];
       const values = [10, 20, 30];
-      const description = describeBarChart(labels, values, defaultOptions);
+      const description = describeBarChart(labels, values, defaultOptions, defaultLabel);
 
       expect(description).toContain('A');
       expect(description).toContain('B');
@@ -49,7 +50,7 @@ describe('describeBarChart', () => {
     it('should show notable values for large datasets', () => {
       const labels = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
       const values = [10, 20, 30, 15, 25, 35, 5, 40];
-      const description = describeBarChart(labels, values, defaultOptions);
+      const description = describeBarChart(labels, values, defaultOptions, defaultLabel);
 
       // Should mention first
       expect(description).toContain('A');
@@ -70,7 +71,7 @@ describe('describeBarChart', () => {
         ...defaultOptions,
         sortPieSlices: true
       };
-      const description = describeBarChart(labels, values, options, 'pie');
+      const description = describeBarChart(labels, values, options, defaultLabel, 'pie');
 
       // Check that values section lists them in sorted order (largest to smallest)
       // "The values are: Large at 100, Medium at 50, Small at 10"
@@ -86,7 +87,7 @@ describe('describeBarChart', () => {
         ...defaultOptions,
         sortPieSlices: false
       };
-      const description = describeBarChart(labels, values, options, 'pie');
+      const description = describeBarChart(labels, values, options, defaultLabel, 'pie');
 
       // Check that values section lists them in original order
       const valuesSection = description.substring(description.indexOf('values are:'));
@@ -97,7 +98,7 @@ describe('describeBarChart', () => {
     it('should show top 3 slices for large pie charts', () => {
       const labels = ['A', 'B', 'C', 'D', 'E', 'F', 'G'];
       const values = [10, 20, 30, 40, 50, 60, 70];
-      const description = describeBarChart(labels, values, defaultOptions, 'pie');
+      const description = describeBarChart(labels, values, defaultOptions, defaultLabel, 'pie');
 
       // Should limit to top slices for large datasets
       expect(description).toContain('70');
@@ -114,7 +115,7 @@ describe('describeBarChart', () => {
         ...defaultOptions,
         yAxisCurrency: 'USD'
       };
-      const description = describeBarChart(labels, values, options);
+      const description = describeBarChart(labels, values, options, defaultLabel);
 
       expect(description).toContain('$');
       expect(description).toContain('1,000');
@@ -130,7 +131,7 @@ describe('describeBarChart', () => {
         ...defaultOptions,
         yUnit: 'widgets'
       };
-      const description = describeBarChart(labels, values, options);
+      const description = describeBarChart(labels, values, options, defaultLabel);
 
       // Note: Bar chart categorical descriptions don't currently include units
       // This is different from trend descriptions which do include units
@@ -143,7 +144,7 @@ describe('describeBarChart', () => {
     it('should handle single data point', () => {
       const labels = ['Only'];
       const values = [42];
-      const description = describeBarChart(labels, values, defaultOptions);
+      const description = describeBarChart(labels, values, defaultOptions, defaultLabel);
 
       expect(description).toContain('42');
       expect(description).toContain('Only');
@@ -152,7 +153,7 @@ describe('describeBarChart', () => {
     it('should handle all same values', () => {
       const labels = ['A', 'B', 'C'];
       const values = [50, 50, 50];
-      const description = describeBarChart(labels, values, defaultOptions);
+      const description = describeBarChart(labels, values, defaultOptions, defaultLabel);
 
       expect(description).toContain('50');
     });
@@ -160,7 +161,7 @@ describe('describeBarChart', () => {
     it('should handle zero values', () => {
       const labels = ['A', 'B', 'C'];
       const values = [0, 10, 20];
-      const description = describeBarChart(labels, values, defaultOptions);
+      const description = describeBarChart(labels, values, defaultOptions, defaultLabel);
 
       expect(description).toContain('0');
       expect(description).toContain('20');
@@ -169,7 +170,7 @@ describe('describeBarChart', () => {
     it('should handle negative values', () => {
       const labels = ['Loss', 'Break Even', 'Profit'];
       const values = [-10, 0, 10];
-      const description = describeBarChart(labels, values, defaultOptions);
+      const description = describeBarChart(labels, values, defaultOptions, defaultLabel);
 
       expect(description).toContain('-10');
       expect(description).toContain('10');
@@ -180,7 +181,7 @@ describe('describeBarChart', () => {
     it('should not include dataset label in single dataset description', () => {
       const labels = ['A', 'B'];
       const values = [10, 20];
-      const description = describeBarChart(labels, values, defaultOptions);
+      const description = describeBarChart(labels, values, defaultOptions, defaultLabel);
 
       // The dataset label is not directly in the description,
       // it's added by the plugin when there are multiple datasets

@@ -103,16 +103,9 @@ export const chart2text: Plugin<'line' | 'bar' | 'pie', Chart2TextOptions> = {
 
       // Generate a single description for the combined data
       const chartType = (chart.config as any).type;
-      const stackedLabel = options.datasetLabel || 'Total';
-
-      const descriptorOptions: Chart2TextOptions = {
-        ...options,
-        datasetLabel: stackedLabel,
-        locale: options.locale || 'en',
-        useRounding: options.useRounding !== false,
-        precision: options.precision || 2,
-        variationStrategy: options.variationStrategy || 'random'
-      };
+      const generalTemplates = options.templates?.general || englishTemplates.general;
+      const datasetLabelTemplate = generalTemplates?.datasetLabel;
+      const stackedLabel = typeof datasetLabelTemplate === 'string' ? datasetLabelTemplate : (datasetLabelTemplate?.[0] || 'Total');
 
       // Determine which descriptor to use
       const descriptorMode = options.descriptor || 'auto';
@@ -128,10 +121,10 @@ export const chart2text: Plugin<'line' | 'bar' | 'pie', Chart2TextOptions> = {
       // Generate description based on chosen mode
       let description = '';
       if (useMode === 'trend') {
-        description = describeLineChart(labels, combinedData, descriptorOptions);
+        description = describeLineChart(labels, combinedData, options, stackedLabel);
       } else {
         const typeForDescriptor = chartType === 'pie' ? 'pie' : 'bar';
-        description = describeBarChart(labels, combinedData, descriptorOptions, typeForDescriptor);
+        description = describeBarChart(labels, combinedData, options, stackedLabel, typeForDescriptor);
       }
 
       if (description) {
@@ -200,16 +193,6 @@ export const chart2text: Plugin<'line' | 'bar' | 'pie', Chart2TextOptions> = {
       const seriesLabelTemplate = typeof seriesTemplate === 'string' ? seriesTemplate : (seriesTemplate?.[0] || 'Series {number}');
       const datasetLabel = dataset.label || seriesLabelTemplate.replace(/{number}/g, (i + 1).toString());
 
-      // Prepare options for descriptor
-      const descriptorOptions: Chart2TextOptions = {
-        ...options,
-        datasetLabel: datasetLabel,
-        locale: options.locale || 'en',
-        useRounding: options.useRounding !== false,
-        precision: options.precision || 2,
-        variationStrategy: options.variationStrategy || 'random'
-      };
-
       // Determine which descriptor to use
       const chartType = (chart.config as any).type;
       const descriptorMode = options.descriptor || 'auto';
@@ -244,12 +227,12 @@ export const chart2text: Plugin<'line' | 'bar' | 'pie', Chart2TextOptions> = {
 
       if (useMode === 'trend') {
         // Use piecewise regression for trend analysis
-        description = describeLineChart(xScale, yScale, descriptorOptions);
+        description = describeLineChart(xScale, yScale, options, datasetLabel);
       } else {
         // Use min/max categorical description
         // Pass chart type for pie chart specific handling
         const typeForDescriptor = chartType === 'pie' ? 'pie' : 'bar';
-        description = describeBarChart(xScale, yScale, descriptorOptions, typeForDescriptor);
+        description = describeBarChart(xScale, yScale, options, datasetLabel, typeForDescriptor);
       }
 
       if (description) {

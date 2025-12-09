@@ -28,7 +28,8 @@ export const englishTemplates: TemplateSet = {
   general: {
     seriesLabel: 'Series {number}',
     barChartLabel: 'bar chart',
-    pieChartLabel: 'pie chart'
+    pieChartLabel: 'pie chart',
+    datasetLabel: 'Total'
   },
 
   firstSegment: {
