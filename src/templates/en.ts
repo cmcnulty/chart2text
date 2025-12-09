@@ -34,12 +34,12 @@ export const englishTemplates: TemplateSet = {
   firstSegment: {
     increasing: [
       'At {xUnit} {startX}, it starts at {startY} and increases by about {changeRate} per {xUnit}, until reaching {endY} at {xUnit} {endX}.',
-      'Starting at {startY} when {xUnit} is {startX}, it rises at a rate of approximately {changeRate} per {xUnit}, reaching {endY} by {xUnit} {endX}.',
+      'Starting at {startY} when {xUnit} is {startX}, it rises at a rate of about {changeRate} per {xUnit}, reaching {endY} by {xUnit} {endX}.',
       'The {datasetLabel} begins at {startY} at {xUnit} {startX} and climbs on average by about {changeRate} per {xUnit} until it hits {endY} at {xUnit} {endX}.'
     ],
     decreasing: [
       'At {xUnit} {startX}, it starts at {startY} and decreases by about {changeRate} per {xUnit}, until reaching {endY} at {xUnit} {endX}.',
-      'Starting at {startY} when {xUnit} is {startX}, it falls at a rate of approximately {changeRate} per {xUnit}, reaching {endY} by {xUnit} {endX}.',
+      'Starting at {startY} when {xUnit} is {startX}, it falls at a rate of about {changeRate} per {xUnit}, reaching {endY} by {xUnit} {endX}.',
       'The {datasetLabel} begins at {startY} at {xUnit} {startX} and drops on average by about {changeRate} per {xUnit} until it reaches {endY} at {xUnit} {endX}.'
     ],
     flat: [
@@ -52,14 +52,14 @@ export const englishTemplates: TemplateSet = {
   subsequentSegment: {
     increasing: [
       'It then increases by about {changeRate} per {xUnit} from {xUnit} {startX} to {xUnit} {endX}, reaching {endY}.',
-      'After that, it rises at approximately {changeRate} per {xUnit} between {xUnit} {startX} and {xUnit} {endX}, climbing to {endY}.',
+      'After that, it rises at about {changeRate} per {xUnit} between {xUnit} {startX} and {xUnit} {endX}, climbing to {endY}.',
       'Subsequently, it grows by roughly {changeRate} per {xUnit} from {xUnit} {startX} until {xUnit} {endX}, reaching {endY}.',
       'Following this, the value increases at a rate of {changeRate} per {xUnit} from {xUnit} {startX} to {xUnit} {endX}, going up to {endY}.',
       'Next, it shows an upward trend of about {changeRate} per {xUnit} from {xUnit} {startX} through {xUnit} {endX}, ascending to {endY}.'
     ],
     decreasing: [
       'It then decreases by about {changeRate} per {xUnit} from {xUnit} {startX} to {xUnit} {endX}, falling to {endY}.',
-      'After that, it declines at approximately {changeRate} per {xUnit} between {xUnit} {startX} and {xUnit} {endX}, dropping to {endY}.',
+      'After that, it declines at about {changeRate} per {xUnit} between {xUnit} {startX} and {xUnit} {endX}, dropping to {endY}.',
       'Subsequently, it falls by roughly {changeRate} per {xUnit} from {xUnit} {startX} until {xUnit} {endX}, reaching {endY}.',
       'Following this, the value decreases at a rate of {changeRate} per {xUnit} from {xUnit} {startX} to {xUnit} {endX}, going down to {endY}.',
       'Next, it shows a downward trend of about {changeRate} per {xUnit} from {xUnit} {startX} through {xUnit} {endX}, descending to {endY}.'
@@ -76,12 +76,12 @@ export const englishTemplates: TemplateSet = {
   disconnectedSegment: {
     increasing: [
       'The data resumes at {xUnit} {startX} with a value of {startY}, then increases by about {changeRate} per {xUnit} to {endY} at {xUnit} {endX}.',
-      'Starting again at {startY} when {xUnit} is {startX}, it rises at approximately {changeRate} per {xUnit}, reaching {endY} by {xUnit} {endX}.',
+      'Starting again at {startY} when {xUnit} is {startX}, it rises at about {changeRate} per {xUnit}, reaching {endY} by {xUnit} {endX}.',
       'A new trend begins at {xUnit} {startX} at {startY}, climbing by roughly {changeRate} per {xUnit} until reaching {endY} at {xUnit} {endX}.'
     ],
     decreasing: [
       'The data resumes at {xUnit} {startX} with a value of {startY}, then decreases by about {changeRate} per {xUnit} to {endY} at {xUnit} {endX}.',
-      'Starting again at {startY} when {xUnit} is {startX}, it falls at approximately {changeRate} per {xUnit}, reaching {endY} by {xUnit} {endX}.',
+      'Starting again at {startY} when {xUnit} is {startX}, it falls at about {changeRate} per {xUnit}, reaching {endY} by {xUnit} {endX}.',
       'A new trend begins at {xUnit} {startX} at {startY}, dropping by roughly {changeRate} per {xUnit} until reaching {endY} at {xUnit} {endX}.'
     ],
     flat: [
@@ -94,12 +94,12 @@ export const englishTemplates: TemplateSet = {
   finalSegment: {
     increasing: [
       'Finally, it increases by about {changeRate} per {xUnit} from {xUnit} {startX} to {xUnit} {endX}, ultimately reaching {endY}.',
-      'In the final segment, it rises at approximately {changeRate} per {xUnit} between {xUnit} {startX} and {xUnit} {endX}, ending at {endY}.',
+      'In the final segment, it rises at about {changeRate} per {xUnit} between {xUnit} {startX} and {xUnit} {endX}, ending at {endY}.',
       'The last trend shows an increase of roughly {changeRate} per {xUnit} from {xUnit} {startX} until {xUnit} {endX}, concluding at {endY}.'
     ],
     decreasing: [
       'Finally, it decreases by about {changeRate} per {xUnit} from {xUnit} {startX} to {xUnit} {endX}, ultimately falling to {endY}.',
-      'In the final segment, it declines at approximately {changeRate} per {xUnit} between {xUnit} {startX} and {xUnit} {endX}, ending at {endY}.',
+      'In the final segment, it declines at about {changeRate} per {xUnit} between {xUnit} {startX} and {xUnit} {endX}, ending at {endY}.',
       'The last trend shows a decrease of roughly {changeRate} per {xUnit} from {xUnit} {startX} until {xUnit} {endX}, concluding at {endY}.'
     ],
     flat: [
