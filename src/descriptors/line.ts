@@ -21,6 +21,22 @@ function fillTemplate(template: string, values: TemplateValues): string {
   });
 }
 
+function variableRound(
+  x: number,
+  ratio: number = 0.5 // 0.5 means keep ~half the digits
+): number {
+  if (x === 0) return 0;
+
+  const digits = Math.floor(Math.log10(Math.abs(x))) + 1;
+  const keep = Math.max(2, Math.ceil(digits * ratio)); // never fewer than 2 sig digits
+
+  const drop = digits - keep;
+  const factor = Math.pow(10, drop);
+
+  return Math.round(x / factor) * factor;
+}
+
+
 /**
  * Selects a template from potentially multiple variations
  */
@@ -200,13 +216,19 @@ export function describeLineChart(
     const startXLabel = mapXToLabel(startX);
     const endXLabel = mapXToLabel(endX);
 
+    // because the slope is y definition an estimate of delta y / delta x
+    // we take absolute value to report the magnitude of change
+    // and then round it according to the scale of the data
+    // TODO: expose rounding logic via options
+    const roundedSlope = variableRound(Math.abs(segment.coeffs.slope));
+
     // Format values for presentation
     const formattedValues: TemplateValues = {
       startX: startXLabel,
       endX: endXLabel,
       startY: formatNumber(startY, options, yAxisCurrency),
       endY: formatNumber(endY, options, yAxisCurrency),
-      changeRate: formatNumber(Math.abs(segment.coeffs.slope), options, yAxisCurrency),
+      changeRate: formatNumber(roundedSlope, options, yAxisCurrency),
       xUnit: options.xUnit || 'units',
       yUnit: options.yUnit || 'units',
       datasetLabel: options.datasetLabel || 'data'
