@@ -58,7 +58,7 @@ new Chart(ctx, {
 
 Generated description:
 
-> "This chart shows Revenue based on year. Starting at $50,000 when year is 2020, it rises at a rate of approximately $11,667 per year, reaching $85,000 by year 2023."
+> "This chart shows Revenue based on year. Starting at $50,000 when year is 2020, it rises at a rate of about $11,667 per year, reaching $85,000 by year 2023."
 
 ## Usage Examples
 
