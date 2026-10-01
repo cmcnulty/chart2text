@@ -97,7 +97,8 @@ describe('chart2text plugin', () => {
       const descElement = document.getElementById('test-chart-description');
       expect(descElement).not.toBeNull();
       expect(descElement?.classList.contains('visually-hidden')).toBe(true);
-      expect(descElement?.getAttribute('tabindex')).toBe('0');
+      // Reached via aria-describedby; it should not be an extra tab stop
+      expect(descElement?.hasAttribute('tabindex')).toBe(false);
     });
 
     it('should set ARIA attributes on canvas', () => {
@@ -392,51 +393,143 @@ describe('chart2text plugin', () => {
     });
   });
 
-  describe('afterDestroy hook', () => {
-    it('should remove description element', () => {
-      const canvas = document.createElement('canvas');
+  describe('canvas aria-label and role ownership', () => {
+    let canvas: HTMLCanvasElement;
+
+    const makeChart = (extra: any = {}) => ({
+      canvas,
+      options: { plugins: { title: { text: 'My Chart' } } },
+      data: {
+        labels: ['A', 'B'],
+        datasets: [{ label: 'Test', data: [10, 20] }]
+      },
+      config: { type: 'bar' },
+      isDatasetVisible: jest.fn(() => true),
+      ...extra
+    } as any);
+
+    beforeEach(() => {
+      canvas = document.createElement('canvas');
       canvas.id = 'test-chart';
       document.body.appendChild(canvas);
+    });
 
-      // Create a description element
-      const desc = document.createElement('div');
-      desc.id = 'test-chart-description';
-      canvas.parentNode?.insertBefore(desc, canvas.nextSibling);
+    afterEach(() => {
+      canvas.remove();
+      document.getElementById('test-chart-description')?.remove();
+    });
 
-      const mockChart = {
-        canvas,
-        options: {},
-        data: { datasets: [] }
-      } as any;
+    it('should not overwrite an aria-label or role set by the author or another plugin', () => {
+      canvas.setAttribute('aria-label', 'Author label');
+      canvas.setAttribute('role', 'application');
+      const chart = makeChart();
 
-      chart2text.afterDestroy?.(mockChart, {}, {});
+      chart2text.beforeInit?.(chart, {}, {});
+      chart2text.afterUpdate?.(chart, { mode: 'default' as const }, {});
+      chart2text.afterUpdate?.(chart, { mode: 'default' as const }, {});
 
-      expect(document.getElementById('test-chart-description')).toBeNull();
+      expect(canvas.getAttribute('aria-label')).toBe('Author label');
+      expect(canvas.getAttribute('role')).toBe('application');
+      expect(canvas.getAttribute('aria-describedby')).toBe('test-chart-description');
+    });
 
+    it('should keep updating its own aria-label across updates', () => {
+      const chart = makeChart();
+
+      chart2text.beforeInit?.(chart, {}, {});
+      chart2text.afterUpdate?.(chart, { mode: 'default' as const }, {});
+      chart.options.plugins.title.text = 'Renamed';
+      chart2text.afterUpdate?.(chart, { mode: 'default' as const }, {});
+
+      expect(canvas.getAttribute('aria-label')).toBe('Renamed with 1 data series.');
+    });
+
+    it('should build the aria-label from the chartLabel and untitledChart templates', () => {
+      const chart = makeChart({ options: {} });
+      const options = {
+        templates: {
+          general: {
+            chartLabel: '{title} con {count} series de datos.',
+            untitledChart: 'Gráfico'
+          }
+        }
+      };
+
+      chart2text.beforeInit?.(chart, {}, options);
+      chart2text.afterUpdate?.(chart, { mode: 'default' as const }, options);
+
+      expect(canvas.getAttribute('aria-label')).toBe('Gráfico con 1 series de datos.');
+    });
+  });
+
+  describe('afterDestroy hook', () => {
+    let canvas: HTMLCanvasElement;
+
+    const makeChart = () => ({
+      canvas,
+      options: { plugins: { title: { text: 'Test' } } },
+      data: {
+        labels: ['A', 'B'],
+        datasets: [{ label: 'Test', data: [10, 20] }]
+      },
+      config: { type: 'bar' },
+      isDatasetVisible: jest.fn(() => true)
+    } as any);
+
+    // Mirrors Chart.js's destroy(), which nulls chart.canvas before afterDestroy
+    const destroy = (chart: any) => {
+      chart.canvas = null;
+      chart2text.afterDestroy?.(chart, {}, {});
+    };
+
+    beforeEach(() => {
+      canvas = document.createElement('canvas');
+      canvas.id = 'test-chart';
+      document.body.appendChild(canvas);
+    });
+
+    afterEach(() => {
       canvas.remove();
     });
 
-    it('should remove ARIA attributes from canvas', () => {
-      const canvas = document.createElement('canvas');
-      canvas.id = 'test-chart';
-      canvas.setAttribute('aria-describedby', 'test-chart-description');
-      canvas.setAttribute('aria-label', 'Test');
-      canvas.setAttribute('role', 'img');
-      document.body.appendChild(canvas);
+    it('should remove description element even though chart.canvas is null', () => {
+      const chart = makeChart();
+      chart2text.beforeInit?.(chart, {}, {});
+      chart2text.afterUpdate?.(chart, { mode: 'default' as const }, {});
+      expect(document.getElementById('test-chart-description')).not.toBeNull();
 
-      const mockChart = {
-        canvas,
-        options: {},
-        data: { datasets: [] }
-      } as any;
+      expect(() => destroy(chart)).not.toThrow();
 
-      chart2text.afterDestroy?.(mockChart, {}, {});
+      expect(document.getElementById('test-chart-description')).toBeNull();
+    });
+
+    it('should remove the ARIA attributes it set', () => {
+      const chart = makeChart();
+      chart2text.beforeInit?.(chart, {}, {});
+      chart2text.afterUpdate?.(chart, { mode: 'default' as const }, {});
+
+      destroy(chart);
 
       expect(canvas.getAttribute('aria-describedby')).toBeNull();
       expect(canvas.getAttribute('aria-label')).toBeNull();
       expect(canvas.getAttribute('role')).toBeNull();
+    });
 
-      canvas.remove();
+    it('should leave an author-set aria-label and role in place', () => {
+      canvas.setAttribute('aria-label', 'Author label');
+      canvas.setAttribute('role', 'application');
+      const chart = makeChart();
+      chart2text.beforeInit?.(chart, {}, {});
+      chart2text.afterUpdate?.(chart, { mode: 'default' as const }, {});
+
+      destroy(chart);
+
+      expect(canvas.getAttribute('aria-label')).toBe('Author label');
+      expect(canvas.getAttribute('role')).toBe('application');
+    });
+
+    it('should not throw if the chart was never initialized and has no canvas', () => {
+      expect(() => chart2text.afterDestroy?.({ canvas: null } as any, {}, {})).not.toThrow();
     });
   });
 });

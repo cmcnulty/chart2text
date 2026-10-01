@@ -5,6 +5,34 @@ import { describeBarChart } from './descriptors/bar';
 import { englishTemplates } from './templates/en';
 
 /**
+ * Per-chart state. The canvas is captured at init because Chart.js sets
+ * `chart.canvas` to null before calling afterDestroy. The `owns*` flags record
+ * whether this plugin set the canvas's aria-label/role (rather than the page
+ * author or another plugin), so it never overwrites or removes theirs.
+ */
+interface ChartState {
+  canvas: HTMLCanvasElement;
+  ownsLabel?: boolean;
+  ownsRole?: boolean;
+}
+
+const chartStates = new WeakMap<Chart, ChartState>();
+
+function getState(chart: Chart): ChartState {
+  let state = chartStates.get(chart);
+  if (!state) {
+    state = { canvas: chart.canvas };
+    chartStates.set(chart, state);
+  }
+  return state;
+}
+
+function firstTemplate(template: string | string[] | undefined, fallback: string): string {
+  if (typeof template === 'string') return template;
+  return template?.[0] || fallback;
+}
+
+/**
  * chart2text - A Chart.js plugin for generating accessible text descriptions
  *
  * Automatically generates natural language descriptions of charts for screen readers.
@@ -17,7 +45,7 @@ export const chart2text: Plugin<'line' | 'bar' | 'pie', Chart2TextOptions> = {
    * Initialize the plugin before chart is created
    */
   beforeInit(chart: Chart, args: any, options: Chart2TextOptions) {
-    const canvas = chart.canvas;
+    const { canvas } = getState(chart);
 
     // Generate a unique ID for the canvas if it doesn't have one
     if (!canvas.id) {
@@ -44,29 +72,50 @@ export const chart2text: Plugin<'line' | 'bar' | 'pie', Chart2TextOptions> = {
       return;
     }
 
-    const canvas = chart.canvas;
+    const state = getState(chart);
+    const canvas = state.canvas;
     const descriptionId = `${canvas.id}-description`;
 
-    // Find existing description element or create a new one
+    // Find existing description element or create a new one.
+    // Not focusable: it is reached through the canvas's aria-describedby, and
+    // a tab stop on non-interactive text would be an extra, confusing stop.
     let descriptionEl = document.getElementById(descriptionId);
     if (!descriptionEl) {
       descriptionEl = document.createElement('div');
       descriptionEl.id = descriptionId;
       descriptionEl.classList.add('visually-hidden');
-      descriptionEl.setAttribute('tabindex', '0'); // Make it focusable for keyboard users
 
       // Insert after canvas
       canvas?.parentNode?.insertBefore(descriptionEl, canvas.nextSibling);
     }
 
-    // Generate a brief summary for aria-label (keep this short)
-    const chartTitle = chart.options.plugins?.title?.text || 'Chart';
-    const titleText = typeof chartTitle === 'string' ? chartTitle : chartTitle.join(' ');
-    const briefSummary = `${titleText} with ${chart.data.datasets.length} data series.`;
+    // Decide ownership on the first update, after every plugin's afterInit
+    // has run, so a role/label set by the author or another plugin (e.g.
+    // role="application" for keyboard-navigable charts) is respected.
+    if (state.ownsLabel === undefined) {
+      state.ownsLabel = !canvas.hasAttribute('aria-label');
+      state.ownsRole = !canvas.hasAttribute('role');
+    }
 
-    // Set brief summary on canvas
-    canvas.setAttribute('aria-label', briefSummary);
-    canvas.setAttribute('role', 'img');
+    const generalTemplatesForLabel = options.templates?.general || englishTemplates.general;
+
+    // Generate a brief summary for aria-label (keep this short)
+    if (state.ownsLabel) {
+      const chartTitle = chart.options.plugins?.title?.text
+        || firstTemplate(generalTemplatesForLabel?.untitledChart, firstTemplate(englishTemplates.general?.untitledChart, 'Chart'));
+      const titleText = typeof chartTitle === 'string' ? chartTitle : chartTitle.join(' ');
+      const labelTemplate = firstTemplate(
+        generalTemplatesForLabel?.chartLabel,
+        firstTemplate(englishTemplates.general?.chartLabel, '{title} with {count} data series.')
+      );
+      const briefSummary = labelTemplate
+        .replace(/{title}/g, titleText)
+        .replace(/{count}/g, chart.data.datasets.length.toString());
+      canvas.setAttribute('aria-label', briefSummary);
+    }
+    if (state.ownsRole) {
+      canvas.setAttribute('role', 'img');
+    }
 
     // Generate detailed descriptions for each dataset
     const descriptions: string[] = [];
@@ -253,8 +302,15 @@ export const chart2text: Plugin<'line' | 'bar' | 'pie', Chart2TextOptions> = {
    * Clean up when chart is destroyed
    */
   afterDestroy(chart: Chart, _args: any, _options: Chart2TextOptions) {
+    // Chart.js nulls chart.canvas before afterDestroy, so use the captured one
+    const state = chartStates.get(chart);
+    const canvas = state?.canvas ?? chart.canvas;
+    chartStates.delete(chart);
+    if (!canvas) {
+      return;
+    }
+
     // Clean up - remove the description element when chart is destroyed
-    const canvas = chart.canvas;
     const descriptionId = `${canvas.id}-description`;
     const descriptionEl = document.getElementById(descriptionId);
 
@@ -262,9 +318,13 @@ export const chart2text: Plugin<'line' | 'bar' | 'pie', Chart2TextOptions> = {
       descriptionEl.parentNode?.removeChild(descriptionEl);
     }
 
-    // Remove aria attributes
+    // Remove only the aria attributes this plugin set
     canvas.removeAttribute('aria-describedby');
-    canvas.removeAttribute('aria-label');
-    canvas.removeAttribute('role');
+    if (state?.ownsLabel) {
+      canvas.removeAttribute('aria-label');
+    }
+    if (state?.ownsRole) {
+      canvas.removeAttribute('role');
+    }
   }
 };

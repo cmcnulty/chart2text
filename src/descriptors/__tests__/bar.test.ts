@@ -188,4 +188,49 @@ describe('describeBarChart', () => {
       expect(description).toBeTruthy();
     });
   });
+
+  describe('value pair template', () => {
+    const labels = ['A', 'B', 'C'];
+    const values = [10, 20, 30];
+
+    it('should use "{label} at {value}" by default', () => {
+      const description = describeBarChart(labels, values, defaultOptions, defaultLabel);
+
+      expect(description).toContain('A at 10');
+    });
+
+    it('should use a custom valuePair template in value lists', () => {
+      const options: Chart2TextOptions = {
+        ...defaultOptions,
+        templates: {
+          categorical: {
+            allValues: 'Los valores son: {values}.',
+            valuePair: '{label} con {value}'
+          }
+        }
+      };
+      const description = describeBarChart(labels, values, options, defaultLabel);
+
+      expect(description).toContain('A con 10, B con 20, C con 30');
+      expect(description).not.toContain(' at ');
+    });
+
+    it('should use a custom valuePair template for notable values in larger datasets', () => {
+      const options: Chart2TextOptions = {
+        ...defaultOptions,
+        templates: {
+          categorical: {
+            notableValues: 'Valores notables: {values}.',
+            valuePair: '{label} con {value}'
+          }
+        }
+      };
+      const description = describeBarChart(
+        ['A', 'B', 'C', 'D', 'E', 'F'], [10, 50, 20, 5, 30, 40], options, defaultLabel
+      );
+
+      expect(description).toContain('Valores notables: A con 10');
+      expect(description).not.toContain(' at ');
+    });
+  });
 });

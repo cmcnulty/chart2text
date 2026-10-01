@@ -70,6 +70,13 @@ export function describeBarChart(
   const maxIndex = numericValues.indexOf(maxValue);
   const minIndex = numericValues.indexOf(minValue);
 
+  // "{label} at {value}" pair used in value lists
+  const valuePairTemplate = selectTemplate(templates.valuePair)
+    || selectTemplate(englishTemplates.categorical?.valuePair)
+    || '{label} at {value}';
+  const valuePair = (label: any, formatted: string) =>
+    fillTemplate(valuePairTemplate, { label, value: formatted });
+
   const formattedMax = formatNumber(maxValue, options, yAxisCurrency);
   const formattedMin = formatNumber(minValue, options, yAxisCurrency);
 
@@ -119,7 +126,7 @@ export function describeBarChart(
   if (items.length <= 5) {
     const valuePairs = items.map((item) => {
       const formatted = formatNumber(item.value, options, yAxisCurrency);
-      return `${item.label} at ${formatted}`;
+      return valuePair(item.label, formatted);
     });
     const allValuesTemplate = selectTemplate(templates.allValues);
     if (allValuesTemplate) {
@@ -133,7 +140,7 @@ export function describeBarChart(
       const topItems = items.slice(0, 3);
       const topPairs = topItems.map((item) => {
         const formatted = formatNumber(item.value, options, yAxisCurrency);
-        return `${item.label} at ${formatted}`;
+        return valuePair(item.label, formatted);
       });
       const topValuesTemplate = selectTemplate(templates.topValues);
       if (topValuesTemplate) {
@@ -146,7 +153,7 @@ export function describeBarChart(
 
       const notablePairs = uniqueIndices.map(i => {
         const formatted = formatNumber(numericValues[i], options, yAxisCurrency);
-        return `${labels[i]} at ${formatted}`;
+        return valuePair(labels[i], formatted);
       });
 
       const notableValuesTemplate = selectTemplate(templates.notableValues);

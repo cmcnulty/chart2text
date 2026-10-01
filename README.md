@@ -249,12 +249,15 @@ All text is generated from templates. No English is hardcoded in the logic.
 - `valueRange` - Min/max range
 - `highestValue`, `lowestValue` - Extreme values
 - `allValues`, `topValues`, `notableValues` - Value lists
+- `valuePair` - One entry in a value list (default `{label} at {value}`)
 
 **Multi-Dataset**:
 - `introduction` - Lists all datasets
 
 **General**:
 - `seriesLabel` - Default label for unnamed datasets
+- `chartLabel` - Canvas `aria-label` (default `{title} with {count} data series.`)
+- `untitledChart` - Title used in `chartLabel` when the chart has no title (default `Chart`)
 
 ### Template Variables
 
@@ -264,13 +267,15 @@ All text is generated from templates. No English is hardcoded in the logic.
 
 **Multi-dataset templates**: `{count}`, `{datasets}`
 
+**`chartLabel`**: `{title}`, `{count}`
+
 ## Accessibility
 
 Follows WCAG 2.1 Level AA:
 
-- Adds ARIA attributes: `aria-describedby`, `aria-label`, `role="img"`
-- Creates hidden `<div>` with full description
-- Keyboard focusable (tabindex="0")
+- Adds `aria-describedby` linking the canvas to a hidden `<div>` with the full description
+- Adds `aria-label` and `role="img"` only when the canvas doesn't already have them, so your own label, or another plugin's role (e.g. `role="application"` for keyboard-navigable charts), is preserved
+- The description `<div>` is not a tab stop; screen readers reach it through `aria-describedby`
 - Compatible with NVDA, JAWS, VoiceOver
 
 ### Required CSS

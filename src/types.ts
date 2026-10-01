@@ -116,6 +116,8 @@ export interface CategoricalTemplates {
   allValues?: string | string[];
   topValues?: string | string[];
   notableValues?: string | string[];
+  /** One entry in a value list. Placeholders: {label}, {value} */
+  valuePair?: string | string[];
 }
 
 /**
@@ -133,6 +135,10 @@ export interface GeneralTemplates {
   barChartLabel?: string | string[];
   pieChartLabel?: string | string[];
   datasetLabel?: string | string[];
+  /** Canvas aria-label. Placeholders: {title}, {count} (number of datasets) */
+  chartLabel?: string | string[];
+  /** Title used in chartLabel when the chart has no title */
+  untitledChart?: string | string[];
 }
 
 /**

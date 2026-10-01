@@ -18,7 +18,8 @@ export const englishTemplates: TemplateSet = {
     lowestValue: 'The lowest value is {label} at {value}.',
     allValues: 'The values are: {values}.',
     topValues: 'The top values are: {values}.',
-    notableValues: 'Notable values include: {values}.'
+    notableValues: 'Notable values include: {values}.',
+    valuePair: '{label} at {value}'
   },
 
   multiDataset: {
@@ -29,7 +30,9 @@ export const englishTemplates: TemplateSet = {
     seriesLabel: 'Series {number}',
     barChartLabel: 'bar chart',
     pieChartLabel: 'pie chart',
-    datasetLabel: 'Total'
+    datasetLabel: 'Total',
+    chartLabel: '{title} with {count} data series.',
+    untitledChart: 'Chart'
   },
 
   firstSegment: {
