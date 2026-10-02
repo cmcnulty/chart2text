@@ -38,7 +38,11 @@ function firstTemplate(template: string | string[] | undefined, fallback: string
  * Automatically generates natural language descriptions of charts for screen readers.
  * Supports line, bar, and pie charts with intelligent trend analysis.
  */
-export const chart2text: Plugin<'line' | 'bar' | 'pie', Chart2TextOptions> = {
+// Typed as a plain `Plugin` (any chart type, any options), exactly the type Chart.js's `plugins` arrays expect.
+// A narrower type like Plugin<'line' | 'bar' | 'pie', Chart2TextOptions> forces TypeScript to compare generic
+// Chart.js types, and whether it accepts that depends on the order it checks files in (fresh builds pass,
+// incremental rebuilds fail). The `chart2text` plugin options stay typed through the module augmentation in types.ts.
+export const chart2text: Plugin = {
   id: 'chart2text',
 
   /**

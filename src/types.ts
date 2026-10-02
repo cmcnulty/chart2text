@@ -173,7 +173,7 @@ export interface TemplateValues {
 /**
  * Plugin type export for Chart.js registration
  */
-export type Chart2TextPlugin = Plugin<'line' | 'bar' | 'pie', Chart2TextOptions>;
+export type Chart2TextPlugin = Plugin;
 
 /**
  * Declare module augmentation for Chart.js plugin options

@@ -1,9 +1,20 @@
+import type { Plugin } from 'chart.js';
 import { chart2text } from '../plugin';
 
 describe('chart2text plugin', () => {
   describe('plugin structure', () => {
     it('should have correct plugin id', () => {
       expect(chart2text.id).toBe('chart2text');
+    });
+
+    it('should be typed exactly as Chart.js plugin lists expect', () => {
+      // Compile-time check (ts-jest type-checks tests). A narrower type, like
+      // Plugin<'line' | 'bar' | 'pie', Chart2TextOptions>, made TypeScript's acceptance of `plugins: [chart2text]`
+      // depend on the order it checked files in, so require the exact type rather than mere assignability.
+      type Equals<A, B> =
+        (<T>() => T extends A ? 1 : 2) extends (<T>() => T extends B ? 1 : 2) ? true : false;
+      const isPlainPlugin: Equals<typeof chart2text, Plugin> = true;
+      expect(isPlainPlugin).toBe(true);
     });
 
     it('should define beforeInit hook', () => {
