@@ -1,6 +1,6 @@
 {
   "name": "chart2text",
-  "version": "1.5.0",
+  "version": "1.5.1",
   "description": "Chart.js plugin that generates natural language descriptions of chart data for screen readers",
   "main": "dist/index.js",
   "module": "dist/index.esm.js",
@@ -52,7 +52,7 @@
     "chart.js": ">=3.0.0"
   },
   "dependencies": {
-    "segreg": "^0.5.5"
+    "segreg": "^0.5.8"
   },
   "devDependencies": {
     "@rollup/plugin-node-resolve": "^15.2.3",
