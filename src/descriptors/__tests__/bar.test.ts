@@ -233,4 +233,23 @@ describe('describeBarChart', () => {
       expect(description).not.toContain(' at ');
     });
   });
+
+  describe('maxListedValues option', () => {
+    const labels = ['A', 'B', 'C', 'D', 'E', 'F', 'G'];
+    const values = [70, 60, 50, 40, 30, 20, 10];
+
+    it('should list only notable values above the default of 5', () => {
+      const description = describeBarChart(labels, values, defaultOptions, defaultLabel);
+
+      expect(description).toContain('Notable values include');
+      expect(description).not.toContain('C at');
+    });
+
+    it('should list every value up to maxListedValues', () => {
+      const description = describeBarChart(labels, values, { ...defaultOptions, maxListedValues: 7 }, defaultLabel);
+
+      expect(description).toContain('The values are: A at 70, B at 60, C at 50, D at 40, E at 30, F at 20, G at 10.');
+      expect(description).not.toContain('Notable values include');
+    });
+  });
 });

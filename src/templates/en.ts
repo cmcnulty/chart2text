@@ -31,6 +31,8 @@ export const englishTemplates: TemplateSet = {
     barChartLabel: 'bar chart',
     pieChartLabel: 'pie chart',
     datasetLabel: 'Total',
+    listPair: '{first} and {second}',
+    listMany: '{rest}, and {last}',
     chartLabel: '{title} with {count} data series.',
     untitledChart: 'Chart'
   },

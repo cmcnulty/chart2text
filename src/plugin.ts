@@ -14,6 +14,8 @@ interface ChartState {
   canvas: HTMLCanvasElement;
   ownsLabel?: boolean;
   ownsRole?: boolean;
+  descriptionEl?: HTMLElement;
+  ownsDescription?: boolean;
 }
 
 const chartStates = new WeakMap<Chart, ChartState>();
@@ -25,6 +27,97 @@ function getState(chart: Chart): ChartState {
     chartStates.set(chart, state);
   }
   return state;
+}
+
+/**
+ * The element the description is written into: the one provided in options, or a visually hidden div the
+ * plugin creates after the canvas. Not focusable: it is reached through the canvas's aria-describedby, and a
+ * tab stop on non-interactive text would be an extra, confusing stop.
+ */
+function getDescriptionElement(state: ChartState, options: Chart2TextOptions): HTMLElement {
+  const provided = options.descriptionElement;
+  if (provided) {
+    if (state.descriptionEl && state.ownsDescription) {
+      state.descriptionEl.remove();
+    }
+    if (!provided.id) {
+      provided.id = `${state.canvas.id}-description`;
+    }
+    state.descriptionEl = provided;
+    state.ownsDescription = false;
+    return provided;
+  }
+
+  if (!state.descriptionEl || !state.ownsDescription) {
+    const descriptionId = `${state.canvas.id}-description`;
+    let created = document.getElementById(descriptionId);
+    if (!created) {
+      created = document.createElement('div');
+      created.id = descriptionId;
+      created.classList.add('visually-hidden');
+      state.canvas.parentNode?.insertBefore(created, state.canvas.nextSibling);
+    }
+    state.descriptionEl = created;
+    state.ownsDescription = true;
+  }
+  return state.descriptionEl;
+}
+
+/**
+ * Join list items with the listPair/listMany templates ("A and B", "A, B, and C"), so the conjunction and
+ * punctuation can be translated
+ */
+function formatList(items: string[], options: Chart2TextOptions): string {
+  const general = options.templates?.general;
+  const english = englishTemplates.general;
+  if (items.length <= 1) {
+    return items[0] ?? '';
+  }
+  if (items.length === 2) {
+    return firstTemplate(general?.listPair, firstTemplate(english?.listPair, '{first} and {second}'))
+      .replace(/{first}/g, items[0])
+      .replace(/{second}/g, items[1]);
+  }
+  return firstTemplate(general?.listMany, firstTemplate(english?.listMany, '{rest}, and {last}'))
+    .replace(/{rest}/g, items.slice(0, -1).join(', '))
+    .replace(/{last}/g, items[items.length - 1]);
+}
+
+/**
+ * For combined stacks, the sentence naming the parts in the total and any hidden ones. Opt-in through the
+ * stackIncludes template. Parts that are zero everywhere aren't named.
+ */
+function describeStackParts(chart: Chart, options: Chart2TextOptions): string {
+  const general = options.templates?.general;
+  const includesTemplate = firstTemplate(general?.stackIncludes, '');
+  if (!includesTemplate) {
+    return '';
+  }
+
+  const shown: string[] = [];
+  const hidden: string[] = [];
+  chart.data.datasets.forEach((dataset, i) => {
+    const hasValues = (dataset.data as unknown[]).some(value => typeof value === 'number' && value !== 0);
+    if (!hasValues) {
+      return;
+    }
+    const label = dataset.label || `${i + 1}`;
+    (chart.isDatasetVisible(i) ? shown : hidden).push(label);
+  });
+
+  const sentences: string[] = [];
+  if (shown.length > 0) {
+    sentences.push(includesTemplate.replace(/{datasets}/g, formatList(shown, options)));
+  }
+  if (hidden.length > 0) {
+    const hiddenTemplate = hidden.length === 1
+      ? firstTemplate(general?.stackHiddenOne, '')
+      : firstTemplate(general?.stackHiddenMany, '');
+    if (hiddenTemplate) {
+      sentences.push(hiddenTemplate.replace(/{datasets}/g, formatList(hidden, options)));
+    }
+  }
+  return sentences.join(' ');
 }
 
 function firstTemplate(template: string | string[] | undefined, fallback: string): string {
@@ -78,20 +171,8 @@ export const chart2text: Plugin = {
 
     const state = getState(chart);
     const canvas = state.canvas;
-    const descriptionId = `${canvas.id}-description`;
-
-    // Find existing description element or create a new one.
-    // Not focusable: it is reached through the canvas's aria-describedby, and
-    // a tab stop on non-interactive text would be an extra, confusing stop.
-    let descriptionEl = document.getElementById(descriptionId);
-    if (!descriptionEl) {
-      descriptionEl = document.createElement('div');
-      descriptionEl.id = descriptionId;
-      descriptionEl.classList.add('visually-hidden');
-
-      // Insert after canvas
-      canvas?.parentNode?.insertBefore(descriptionEl, canvas.nextSibling);
-    }
+    const descriptionEl = getDescriptionElement(state, options);
+    canvas.setAttribute('aria-describedby', descriptionEl.id);
 
     // Decide ownership on the first update, after every plugin's afterInit
     // has run, so a role/label set by the author or another plugin (e.g.
@@ -173,11 +254,12 @@ export const chart2text: Plugin = {
 
       // Generate description based on chosen mode
       let description = '';
+      const stackParts = describeStackParts(chart, options);
       if (useMode === 'trend') {
-        description = describeLineChart(labels, combinedData, options, stackedLabel);
+        description = describeLineChart(labels, combinedData, options, stackedLabel, stackParts);
       } else {
         const typeForDescriptor = chartType === 'pie' ? 'pie' : 'bar';
-        description = describeBarChart(labels, combinedData, options, stackedLabel, typeForDescriptor);
+        description = describeBarChart(labels, combinedData, options, stackedLabel, typeForDescriptor, stackParts);
       }
 
       if (description) {
@@ -208,17 +290,7 @@ export const chart2text: Plugin = {
         const introTemplate = templates?.introduction;
 
         if (introTemplate) {
-          // Format the dataset list with commas and "and"
-          let formattedDatasets: string;
-          if (datasetLabels.length === 1) {
-            formattedDatasets = datasetLabels[0];
-          } else if (datasetLabels.length === 2) {
-            formattedDatasets = `${datasetLabels[0]} and ${datasetLabels[1]}`;
-          } else {
-            const allButLast = datasetLabels.slice(0, -1).join(', ');
-            const last = datasetLabels[datasetLabels.length - 1];
-            formattedDatasets = `${allButLast}, and ${last}`;
-          }
+          const formattedDatasets = formatList(datasetLabels, options);
 
           // Use first variation if it's an array
           const template = typeof introTemplate === 'string' ? introTemplate : introTemplate[0];
@@ -299,7 +371,7 @@ export const chart2text: Plugin = {
     } // End of else block for non-combined stacks
 
     // Update the description element content
-    descriptionEl.innerHTML = descriptions.join(' ');
+    descriptionEl.textContent = descriptions.join(' ');
   },
 
   /**
@@ -314,11 +386,9 @@ export const chart2text: Plugin = {
       return;
     }
 
-    // Clean up - remove the description element when chart is destroyed
-    const descriptionId = `${canvas.id}-description`;
-    const descriptionEl = document.getElementById(descriptionId);
-
-    if (descriptionEl) {
+    // Clean up - remove the description element if the plugin created it
+    const descriptionEl = state?.descriptionEl ?? document.getElementById(`${canvas.id}-description`);
+    if (descriptionEl && state?.ownsDescription !== false) {
       descriptionEl.parentNode?.removeChild(descriptionEl);
     }
 

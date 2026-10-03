@@ -14,10 +14,21 @@ export function formatNumber(
   currency?: string
 ): string {
   if (currency) {
-    // Format as currency
+    // Natural rounding drops minor units (cents) once there's at least one whole unit; otherwise
+    // `precision` sets the decimals, falling back to the currency's own (2 for USD)
+    let fractionDigits: number | undefined;
+    if (options.useRounding !== false) {
+      fractionDigits = Math.abs(num) >= 1 ? 0 : undefined;
+    } else {
+      fractionDigits = options.precision;
+    }
     const formatter = new Intl.NumberFormat(options.locale || 'en', {
       style: 'currency',
-      currency: currency
+      currency: currency,
+      ...(fractionDigits !== undefined && {
+        minimumFractionDigits: fractionDigits,
+        maximumFractionDigits: fractionDigits
+      })
     });
     return formatter.format(num);
   }

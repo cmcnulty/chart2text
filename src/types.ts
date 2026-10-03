@@ -11,6 +11,14 @@ export interface Chart2TextOptions {
   enabled?: boolean;
 
   /**
+   * Element to write the description into, such as a paragraph inside a visible <details> disclosure.
+   * When omitted, the plugin creates a visually hidden div after the canvas.
+   * A provided element is never removed or hidden by the plugin; it gets an id if it has none, and the
+   * canvas's aria-describedby points to it.
+   */
+  descriptionElement?: HTMLElement;
+
+  /**
    * Locale for number formatting and templates
    * @default 'en'
    */
@@ -39,13 +47,14 @@ export interface Chart2TextOptions {
   yAxisCurrency?: string;
 
   /**
-   * Whether to use "natural" rounding for readability
+   * Whether to use "natural" rounding for readability. For currency, this drops minor units (cents) from
+   * amounts of 1 or more ("$1,234" rather than "$1,234.56")
    * @default true
    */
   useRounding?: boolean;
 
   /**
-   * Number of decimal places for non-rounded values
+   * Number of decimal places for non-rounded values (for currency, defaults to the currency's own, e.g. 2 for USD)
    * @default 2
    */
   precision?: number;
@@ -86,6 +95,13 @@ export interface Chart2TextOptions {
    * @default true
    */
   sortPieSlices?: boolean;
+
+  /**
+   * Categorical descriptions list every value when there are at most this many categories; with more, they
+   * list only notable ones (top values for pie charts; first, highest, lowest, and last for bar charts)
+   * @default 5
+   */
+  maxListedValues?: number;
 
   /**
    * For stacked charts (bar, area, etc.), combine all dataset values into totals
@@ -135,6 +151,19 @@ export interface GeneralTemplates {
   barChartLabel?: string | string[];
   pieChartLabel?: string | string[];
   datasetLabel?: string | string[];
+  /** Joins two list items. Placeholders: {first}, {second} (default "{first} and {second}") */
+  listPair?: string | string[];
+  /** Joins three or more list items. Placeholders: {rest} (comma-separated), {last} (default "{rest}, and {last}") */
+  listMany?: string | string[];
+  /**
+   * With combineStacks, a sentence after the introduction naming the parts in the total, e.g. "It includes {datasets}."
+   * Opt-in: omitted unless set. Parts that are zero everywhere aren't named.
+   */
+  stackIncludes?: string | string[];
+  /** With stackIncludes, names one hidden part, e.g. "{datasets} is hidden." */
+  stackHiddenOne?: string | string[];
+  /** With stackIncludes, names several hidden parts, e.g. "{datasets} are hidden." */
+  stackHiddenMany?: string | string[];
   /** Canvas aria-label. Placeholders: {title}, {count} (number of datasets) */
   chartLabel?: string | string[];
   /** Title used in chartLabel when the chart has no title */

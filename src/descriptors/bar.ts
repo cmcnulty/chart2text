@@ -31,7 +31,8 @@ export function describeBarChart(
   values: any[],
   options: Chart2TextOptions,
   datasetLabel?: string,
-  chartType: 'bar' | 'pie' = 'bar'
+  chartType: 'bar' | 'pie' = 'bar',
+  afterIntroduction?: string
 ): string {
   if (!labels || !values || labels.length === 0 || values.length === 0) {
     return 'No data available to describe.';
@@ -94,6 +95,10 @@ export function describeBarChart(
     result += fillTemplate(introTemplate, { chartType: chartTypeLabel, datasetLabel: datasetLabelToUse }) + ' ';
   }
 
+  if (afterIntroduction) {
+    result += afterIntroduction + ' ';
+  }
+
   // Category count
   const countTemplate = selectTemplate(templates.categoryCount);
   if (countTemplate) {
@@ -122,8 +127,8 @@ export function describeBarChart(
     }
   }
 
-  // List all values if there aren't too many (5 or fewer)
-  if (items.length <= 5) {
+  // List all values if there aren't too many; otherwise only notable ones
+  if (items.length <= (options.maxListedValues ?? 5)) {
     const valuePairs = items.map((item) => {
       const formatted = formatNumber(item.value, options, yAxisCurrency);
       return valuePair(item.label, formatted);

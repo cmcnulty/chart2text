@@ -5,12 +5,34 @@ describe('formatNumber', () => {
   describe('currency formatting', () => {
     it('should format USD currency', () => {
       const options: Chart2TextOptions = { locale: 'en' };
-      expect(formatNumber(1000, options, 'USD')).toBe('$1,000.00');
+      expect(formatNumber(1000, options, 'USD')).toBe('$1,000');
     });
 
     it('should format EUR currency', () => {
       const options: Chart2TextOptions = { locale: 'en' };
-      expect(formatNumber(1000, options, 'EUR')).toBe('€1,000.00');
+      expect(formatNumber(1000, options, 'EUR')).toBe('€1,000');
+    });
+
+    it('should drop cents from whole amounts with natural rounding (the default)', () => {
+      const options: Chart2TextOptions = { locale: 'en' };
+      expect(formatNumber(101993.28, options, 'USD')).toBe('$101,993');
+      expect(formatNumber(8900, options, 'USD')).toBe('$8,900');
+      expect(formatNumber(1.5, options, 'USD')).toBe('$2');
+    });
+
+    it('should keep cents below one whole unit', () => {
+      const options: Chart2TextOptions = { locale: 'en' };
+      expect(formatNumber(0.4, options, 'USD')).toBe('$0.40');
+    });
+
+    it('should use the currency default without rounding', () => {
+      const options: Chart2TextOptions = { locale: 'en', useRounding: false };
+      expect(formatNumber(101993.28, options, 'USD')).toBe('$101,993.28');
+    });
+
+    it('should use precision for currency without rounding', () => {
+      const options: Chart2TextOptions = { locale: 'en', useRounding: false, precision: 0 };
+      expect(formatNumber(101993.28, options, 'USD')).toBe('$101,993');
     });
 
     it('should respect locale for currency formatting', () => {
@@ -94,7 +116,7 @@ describe('formatNumber', () => {
     it('should use en locale by default', () => {
       const options: Chart2TextOptions = {};
       const result = formatNumber(1000, options, 'USD');
-      expect(result).toBe('$1,000.00');
+      expect(result).toBe('$1,000');
     });
   });
 });

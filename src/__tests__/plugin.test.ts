@@ -404,6 +404,169 @@ describe('chart2text plugin', () => {
     });
   });
 
+  describe('stack parts sentence (combineStacks)', () => {
+    let canvas: HTMLCanvasElement;
+    const templates = {
+      general: {
+        stackIncludes: 'It includes {datasets}.',
+        stackHiddenOne: '{datasets} is hidden.',
+        stackHiddenMany: '{datasets} are hidden.'
+      }
+    };
+
+    const makeChart = (hidden: number[] = [], data = [[10, 20], [5, 15], [1, 2], [0, 0]]) => ({
+      canvas,
+      options: { scales: { x: { stacked: true }, y: { stacked: true } } },
+      data: {
+        labels: ['A', 'B'],
+        datasets: [
+          { label: 'Annuity', data: data[0] },
+          { label: 'Contributions', data: data[1] },
+          { label: 'Social Security', data: data[2] },
+          { label: 'Empty', data: data[3] }
+        ]
+      },
+      config: { type: 'bar' },
+      isDatasetVisible: (i: number) => !hidden.includes(i)
+    } as any);
+
+    const describe = (chart: any, options: any) => {
+      chart2text.afterUpdate?.(chart, { mode: 'default' as const }, { combineStacks: true, descriptor: 'categorical', ...options });
+      return document.getElementById('test-chart-description')?.textContent || '';
+    };
+
+    beforeEach(() => {
+      canvas = document.createElement('canvas');
+      canvas.id = 'test-chart';
+      document.body.appendChild(canvas);
+    });
+
+    afterEach(() => {
+      canvas.remove();
+      document.getElementById('test-chart-description')?.remove();
+    });
+
+    it('should name the parts in the total, leaving out parts that are zero everywhere', () => {
+      const description = describe(makeChart(), { templates });
+
+      expect(description).toContain('It includes Annuity, Contributions, and Social Security.');
+      expect(description).not.toContain('Empty');
+    });
+
+    it('should come right after the introduction', () => {
+      const description = describe(makeChart(), { templates: { ...templates, categorical: { chartIntroduction: 'Intro.' } } });
+
+      expect(description.startsWith('Intro. It includes')).toBe(true);
+    });
+
+    it('should name hidden parts, with singular and plural wording', () => {
+      expect(describe(makeChart([2]), { templates })).toContain('It includes Annuity and Contributions. Social Security is hidden.');
+      expect(describe(makeChart([0, 2]), { templates })).toContain('It includes Contributions. Annuity and Social Security are hidden.');
+    });
+
+    it('should use translated list joining', () => {
+      const description = describe(makeChart(), {
+        templates: { general: { ...templates.general, stackIncludes: 'Incluye {datasets}.', listMany: '{rest} y {last}' } }
+      });
+
+      expect(description).toContain('Incluye Annuity, Contributions y Social Security.');
+    });
+
+    it('should be omitted unless the stackIncludes template is set', () => {
+      expect(describe(makeChart(), {})).not.toContain('includes');
+    });
+  });
+
+  describe('descriptionElement option', () => {
+    let canvas: HTMLCanvasElement;
+    let target: HTMLElement;
+
+    const makeChart = () => ({
+      canvas,
+      options: { plugins: { title: { text: 'Test' } } },
+      data: {
+        labels: ['A', 'B'],
+        datasets: [{ label: '<b>Sales</b>', data: [10, 20] }]
+      },
+      config: { type: 'bar' },
+      isDatasetVisible: jest.fn(() => true)
+    } as any);
+
+    beforeEach(() => {
+      canvas = document.createElement('canvas');
+      canvas.id = 'test-chart';
+      target = document.createElement('p');
+      document.body.append(canvas, target);
+    });
+
+    afterEach(() => {
+      canvas.remove();
+      target.remove();
+      document.getElementById('test-chart-description')?.remove();
+    });
+
+    it('should write the description into the provided element instead of a hidden div', () => {
+      const chart = makeChart();
+      const options = { descriptionElement: target };
+
+      chart2text.beforeInit?.(chart, {}, options);
+      chart2text.afterUpdate?.(chart, { mode: 'default' as const }, options);
+
+      expect(target.textContent).toContain('A');
+      expect(target.classList.contains('visually-hidden')).toBe(false);
+      expect(canvas.parentNode?.querySelector('.visually-hidden')).toBeNull();
+      expect(target.id).toBe('test-chart-description');
+      expect(canvas.getAttribute('aria-describedby')).toBe('test-chart-description');
+    });
+
+    it('should keep an id the provided element already has', () => {
+      target.id = 'my-summary';
+      const chart = makeChart();
+      const options = { descriptionElement: target };
+
+      chart2text.beforeInit?.(chart, {}, options);
+      chart2text.afterUpdate?.(chart, { mode: 'default' as const }, options);
+
+      expect(canvas.getAttribute('aria-describedby')).toBe('my-summary');
+    });
+
+    it('should write text, not markup', () => {
+      const chart = makeChart();
+      const options = { descriptionElement: target };
+
+      chart2text.beforeInit?.(chart, {}, options);
+      chart2text.afterUpdate?.(chart, { mode: 'default' as const }, options);
+
+      expect(target.querySelector('b')).toBeNull();
+      expect(target.textContent).toContain('<b>Sales</b>');
+    });
+
+    it('should not remove the provided element when the chart is destroyed', () => {
+      const chart = makeChart();
+      const options = { descriptionElement: target };
+      chart2text.beforeInit?.(chart, {}, options);
+      chart2text.afterUpdate?.(chart, { mode: 'default' as const }, options);
+
+      chart.canvas = null;
+      chart2text.afterDestroy?.(chart, {}, options);
+
+      expect(target.isConnected).toBe(true);
+      expect(canvas.hasAttribute('aria-describedby')).toBe(false);
+    });
+
+    it('should remove its own hidden div when switched to a provided element', () => {
+      const chart = makeChart();
+      chart2text.beforeInit?.(chart, {}, {});
+      chart2text.afterUpdate?.(chart, { mode: 'default' as const }, {});
+      expect(document.querySelector('.visually-hidden')).not.toBeNull();
+
+      chart2text.afterUpdate?.(chart, { mode: 'default' as const }, { descriptionElement: target });
+
+      expect(document.querySelector('.visually-hidden')).toBeNull();
+      expect(canvas.getAttribute('aria-describedby')).toBe(target.id);
+    });
+  });
+
   describe('canvas aria-label and role ownership', () => {
     let canvas: HTMLCanvasElement;
 

@@ -174,6 +174,7 @@ new Chart(ctx, {
 | `descriptor` | `'auto'` \| `'trend'` \| `'categorical'` | `'auto'` | Description strategy |
 | `multiDatasetIntroduction` | `boolean` | `true` | List all datasets before describing each |
 | `sortPieSlices` | `boolean` | `true` | Sort pie slices largest to smallest |
+| `maxListedValues` | `number` | `5` | Categorical descriptions list every value up to this many categories, otherwise only notable ones |
 | `combineStacks` | `boolean` | `false` | Combine stacked datasets into totals |
 | `locale` | `string` | `'en'` | Locale for number formatting |
 | `datasetLabel` | `string` | `'data'` | Label for the dataset |
@@ -181,10 +182,11 @@ new Chart(ctx, {
 | `yUnit` | `string` | `'units'` | Unit name for y-axis |
 | `xAxisCurrency` | `string` | `undefined` | Currency code for x-axis |
 | `yAxisCurrency` | `string` | `undefined` | Currency code for y-axis |
-| `useRounding` | `boolean` | `true` | Use natural rounding for readability |
-| `precision` | `number` | `2` | Decimal places when rounding disabled |
+| `useRounding` | `boolean` | `true` | Use natural rounding for readability; currency amounts of 1 or more drop minor units (`$1,234`, not `$1,234.56`) |
+| `precision` | `number` | `2` | Decimal places when rounding disabled (currency defaults to its own, e.g. 2 for USD) |
 | `variationStrategy` | `'random'` \| `'sequential'` | `'random'` | Template variation selection |
 | `templates` | `TemplateSet` | Built-in | Custom template overrides |
+| `descriptionElement` | `HTMLElement` | `undefined` | Element to write the description into (e.g. a paragraph in a visible `<details>`); by default a visually hidden `div` is created after the canvas |
 
 ### Description Modes
 
@@ -257,6 +259,8 @@ All text is generated from templates. No English is hardcoded in the logic.
 **General**:
 - `seriesLabel` - Default label for unnamed datasets
 - `chartLabel` - Canvas `aria-label` (default `{title} with {count} data series.`)
+- `listPair`, `listMany` - How lists are joined (defaults `{first} and {second}`, `{rest}, and {last}`)
+- `stackIncludes`, `stackHiddenOne`, `stackHiddenMany` - With `combineStacks`, an opt-in sentence after the introduction naming the parts in the total and any hidden ones, e.g. `It includes {datasets}.` / `{datasets} is hidden.` Parts that are zero everywhere aren't named.
 - `untitledChart` - Title used in `chartLabel` when the chart has no title (default `Chart`)
 
 ### Template Variables

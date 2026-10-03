@@ -86,7 +86,8 @@ export function describeLineChart(
   xScale: any[],
   yScale: any[],
   options: Chart2TextOptions,
-  datasetLabel?: string
+  datasetLabel?: string,
+  afterIntroduction?: string
 ): string {
   if (!xScale || !yScale || xScale.length === 0 || yScale.length === 0) {
     return 'No data available to describe.';
@@ -164,6 +165,10 @@ export function describeLineChart(
         yUnit: options.yUnit || 'units'
       } as TemplateValues) + ' ';
     }
+  }
+
+  if (afterIntroduction) {
+    result += afterIntroduction + ' ';
   }
 
   // Generate description for each segment
